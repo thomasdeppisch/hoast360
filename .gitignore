@@ -1,0 +1,5 @@
+.DS_Store
+sounds/*
+videos/*
+dependencies/videojs-vr/
+media/
