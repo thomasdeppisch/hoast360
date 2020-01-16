@@ -3,3 +3,4 @@ sounds/*
 videos/*
 dependencies/videojs-vr/
 media/
+*.pem

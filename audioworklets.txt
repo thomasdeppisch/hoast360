@@ -1,0 +1,4 @@
+kompilieren mit:
+em++ --bind -O1 -s WASM=1 -s BINARYEN_ASYNC_COMPILATION=0 -s SINGLE_FILE=1 GainProcessor.cpp -o gain-processor.wasmmodule.js --post-js lib/em-es6-module.js
+
+http-server -S -C cert.pem -o
