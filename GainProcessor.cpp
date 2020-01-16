@@ -50,7 +50,7 @@ class GainProcessor {
       float* destination = output_buffer + channel * kRenderQuantumFrames;
       float* source = input_buffer + channel * kRenderQuantumFrames;
       for (int smp = 0; smp < kRenderQuantumFrames; ++smp) {
-        // *(source + smp) = 0; // set all samples to zero
+        *(source + smp) = 0.1f * *(source + smp); // set all samples to zero
       }
 
       memcpy(destination, source, kBytesPerChannel);
