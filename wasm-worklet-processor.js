@@ -14,10 +14,6 @@
  * the License.
  */
 
-import Module from './gain-processor.wasmmodule.js';
-import { RENDER_QUANTUM_FRAMES, MAX_CHANNEL_COUNT, HeapAudioBuffer }
-    from './lib/wasm-audio-helper.js';
-
 
 /**
  * A simple demonstration of WASM-powered AudioWorkletProcessor.

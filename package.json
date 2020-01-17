@@ -9,7 +9,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack -d",
-    "build-wasm": "em++ --bind -O1 -s WASM=1 -s BINARYEN_ASYNC_COMPILATION=0 -s SINGLE_FILE=1 GainProcessor.cpp -o gain-processor.wasmmodule.js"
+    "build-wasm": "em++ --bind -O1 -s WASM=1 -s BINARYEN_ASYNC_COMPILATION=0 -s SINGLE_FILE=1 GainProcessor.cpp -o gain-processor.wasmmodule.js --post-js lib/wasm-audio-helper.js --post-js wasm-worklet-processor.js"
   },
   "repository": {
     "type": "git",

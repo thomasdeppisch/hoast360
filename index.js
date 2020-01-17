@@ -25,7 +25,7 @@ $("#clickme").on("click", function() {
 })
 
 // Loads module script via AudioWorklet.
-context.audioWorklet.addModule('wasm-worklet-processor.js').then(() => {
+context.audioWorklet.addModule('gain-processor.wasmmodule.js').then(() => {
   // After the resolution of module loading, an AudioWorkletNode can be
   // constructed.
   let gainWorkletNode = new AudioWorkletNode(context, 'wasm-worklet-processor');
