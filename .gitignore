@@ -4,3 +4,4 @@ videos/*
 dependencies/videojs-vr/
 media/
 *.pem
+node_modules/*
