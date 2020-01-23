@@ -5,7 +5,6 @@ import './dependencies/videojs-vr.min.js';
 import * as ambisonics from 'ambisonics';
 import MatrixMultiplier from './dependencies/MatrixMultiplier.js';
 import {zoom, zoomfactors} from './dependencies/zoom.js';
-// import css from './css/hoast.css';
 import './css/video-js.css';
 
 var order,
@@ -24,30 +23,40 @@ var order,
 		wasPaused = true,
 		waitingForPlayback = false,
 		context, order, channelMerger, rotator, multiplier, sound, decoder,
-		viewAzim, viewElev, hoabuffer, masterGain, numCh, videoPlayer;
+		viewAzim, viewElev, hoabuffer, masterGain, numCh;
+
+var maxOrder = 4;
+var tracksPerAudioPlayer = 7;
+var maxNrOfAudioPlayers = Math.ceil((maxOrder + 1) * (maxOrder + 1) / tracksPerAudioPlayer);
+
+// create as many audio players as we need for max order
+for (let i = 0; i < maxNrOfAudioPlayers; ++i) {
+	audioElements[i] = new Audio();
+	audioPlayers[i] = dashjs.MediaPlayer().create();
+}
+
+var videoPlayer = videojs('videojs-player');
+videoPlayer.vr({projection: '360'});
+console.log(videoPlayer);
+console.log(videoPlayer.vr());
 
 export function initialize(newMediaUrl, newOrder) {
 	order = newOrder;
 	mediaUrl = newMediaUrl;
 	setOrderDependentVariables();
 
-	videoPlayer = videojs('videojs-player', {
-		sources: [{
-	    src: mediaUrl + '/video.mpd',
-	    type: 'application/dash+xml'
-	  }],
-		html5: {
-	    nativeCaptions: false // get rid of weird safari error...
-	  }
-	});
-
-	videoPlayer.vr({projection: '360'});
-	console.log(videoPlayer);
-	console.log(videoPlayer.vr());
+	videoPlayer.src({type: 'application/dash+xml', src: mediaUrl + '/video.mpd'});
+	// videoPlayer = videojs('videojs-player', {
+	// 	sources: [{
+	//     src: mediaUrl + '/video.mpd',
+	//     type: 'application/dash+xml'
+	//   }],
+	// 	html5: {
+	//     nativeCaptions: false // get rid of weird safari error...
+	//   }
+	// });
 
 	for (let i = 0; i < nrActiveAudioPlayers; ++i) {
-	  audioElements[i] = new Audio();
-		audioPlayers[i] = dashjs.MediaPlayer().create();
 		audioPlayers[i].initialize(audioElements[i], mediaUrl + "audio_" + chStrings[i] + ".mpd", false);
 	  // console.log(audioPlayers[i]);
 	  // console.log(audioPlayers[i].getVideoElement());
@@ -417,26 +426,3 @@ function setOrderDependentVariables() {
 	}
 
 }
-
-// this is needed to enable WAA with Safari, still if used in combination with dash.js this is not enough...
-// function unlockAudioContext(ctx) {
-// 	// if (ctx.state !== 'suspended')
-// 	// 	return;
-// 	const b = document.body;
-// 	const events = ['touchstart', 'touchend', 'mousedown', 'keydown'];
-// 	events.forEach(e => b.addEventListener(e, unlock, false));
-// 	videoPlayer.one("play", unlock);
-//
-// 	function unlock() {
-// 		console.log("unlocked!");
-// 		for (let i in audioPlayers) {
-// 			audioPlayers[i].play();
-// 			audioPlayers[i].pause();
-// 		}
-//
-// 		ctx.resume().then(clean);
-// 	}
-// 	function clean() {
-// 		events.forEach(e => b.removeEventListener(e, unlock));
-// 	}
-// }
