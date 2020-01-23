@@ -46,7 +46,7 @@ h1 {
 
 #headers::after {
   content: "";
-  background-image: url("img/shs_o4.jpg");
+  background-image: url("../img/shs_o4.jpg");
   background-size: 320px;
   background-repeat: no-repeat;
   background-position: 50% 30px;

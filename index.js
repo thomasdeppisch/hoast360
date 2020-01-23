@@ -5,6 +5,8 @@ import './dependencies/videojs-vr.min.js';
 import * as ambisonics from 'ambisonics';
 import MatrixMultiplier from './dependencies/MatrixMultiplier.js';
 import {zoom, zoomfactors} from './dependencies/zoom.js';
+// import css from './css/hoast.css';
+import './css/video-js.css';
 
 var order,
 		chCounts,	// how many channels per file (including empty LFE channels)
