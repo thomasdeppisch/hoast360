@@ -3,7 +3,9 @@ var webpack = require('webpack');
 module.exports = {
   entry: './index.js',
   output: {
-    filename: 'hoast360.bundle.js'
+    filename: 'hoast360.bundle.js',
+    library: 'hoast360',
+    libraryTarget: 'var' // import via <script>
   },
   module: {
     rules: [

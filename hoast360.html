@@ -7,8 +7,8 @@
 		<link rel="shortcut icon" type="image/jpg" href="img/favicon.jpg"/>
 		<link href="https://fonts.googleapis.com/css?family=Poiret+One" rel="stylesheet">
 	  <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
-		<link href="https://vjs.zencdn.net/7.6.0/video-js.css" rel="stylesheet">
-		<link rel="stylesheet" type="text/css" href="hoast.css">
+		<!-- <link href="https://vjs.zencdn.net/7.6.0/video-js.css" rel="stylesheet">
+		<link rel="stylesheet" type="text/css" href="hoast.css"> -->
 	</head>
 	<body>
 
@@ -28,7 +28,10 @@
 		  </p>
 		</video-js>
 
-		<script src="./dist/hoast360.bundle.js" type="module"></script>
+		<script src="./dist/hoast360.bundle.js"></script>
+		<script>
+			hoast360.initialize("media/2015_VokalTotal/", 4);
+		</script>
 
 	</body>
 </html>

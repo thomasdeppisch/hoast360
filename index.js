@@ -3,16 +3,15 @@ import 'dashjs';
 import videojs from 'video.js';
 import './dependencies/videojs-vr.min.js';
 import * as ambisonics from 'ambisonics';
-// var ambisonics = require('ambisonics');
 import MatrixMultiplier from './dependencies/MatrixMultiplier.js';
 import {zoom, zoomfactors} from './dependencies/zoom.js';
 
-var order = 4,
+var order,
 		chCounts,	// how many channels per file (including empty LFE channels)
 		chStrings, // strings describing contained audio channels (excluding empty LFE channels)
 		nrActiveAudioPlayers,
 		irs = "irs/mls_o4_rev.wav",
-		mediaUrl = "media/2015_VokalTotal/",
+		mediaUrl,
     audioElements = [],
 		audioPlayers = [],
 		sourceNodes = [],
@@ -23,47 +22,49 @@ var order = 4,
 		wasPaused = true,
 		waitingForPlayback = false,
 		context, order, channelMerger, rotator, multiplier, sound, decoder,
-		viewAzim, viewElev, hoabuffer, masterGain, numCh;
+		viewAzim, viewElev, hoabuffer, masterGain, numCh, videoPlayer;
 
-setOrderDependentVariables();
+export function initialize(newMediaUrl, newOrder) {
+	order = newOrder;
+	mediaUrl = newMediaUrl;
+	setOrderDependentVariables();
 
-// var scene = new THREE.Scene();
+	videoPlayer = videojs('videojs-player', {
+		sources: [{
+	    src: mediaUrl + '/video.mpd',
+	    type: 'application/dash+xml'
+	  }],
+		html5: {
+	    nativeCaptions: false // get rid of weird safari error...
+	  }
+	});
 
-var videoPlayer = videojs('videojs-player', {
-	sources: [{
-    src: mediaUrl + '/video.mpd',
-    type: 'application/dash+xml'
-  }],
-	html5: {
-    nativeCaptions: false // get rid of weird safari error...
-  }
-});
+	videoPlayer.vr({projection: '360'});
+	console.log(videoPlayer);
+	console.log(videoPlayer.vr());
 
-videoPlayer.vr({projection: '360'});
-console.log(videoPlayer);
-console.log(videoPlayer.vr());
+	for (let i = 0; i < nrActiveAudioPlayers; ++i) {
+	  audioElements[i] = new Audio();
+		audioPlayers[i] = dashjs.MediaPlayer().create();
+		audioPlayers[i].initialize(audioElements[i], mediaUrl + "audio_" + chStrings[i] + ".mpd", false);
+	  // console.log(audioPlayers[i]);
+	  // console.log(audioPlayers[i].getVideoElement());
+	}
 
-for (let i = 0; i < nrActiveAudioPlayers; ++i) {
-  audioElements[i] = new Audio();
-	audioPlayers[i] = dashjs.MediaPlayer().create();
-	audioPlayers[i].initialize(audioElements[i], mediaUrl + "audio_" + chStrings[i] + ".mpd", false);
-  // console.log(audioPlayers[i]);
-  // console.log(audioPlayers[i].getVideoElement());
+	videoPlayer.ready(function() {
+		console.log("video player ready");
+
+		// prevent play before everything is set up correctly
+		var tech = videoPlayer.tech({ IWillNotUseThisInPlugins: true });
+		tech.off("mouseup");
+		videoPlayer.bigPlayButton.off("click");
+	});
+
+	videoPlayer.vr().on( "initialized", function() {
+		startSetup();
+		handleEvents();
+	});
 }
-
-videoPlayer.ready(function() {
-	console.log("video player ready");
-
-	// prevent play before everything is set up correctly
-	var tech = videoPlayer.tech({ IWillNotUseThisInPlugins: true });
-	tech.off("mouseup");
-	videoPlayer.bigPlayButton.off("click");
-});
-
-videoPlayer.vr().on( "initialized", function() {
-	startSetup();
-	handleEvents();
-});
 
 function handleEvents() {
 	// first we need to get control over playback
