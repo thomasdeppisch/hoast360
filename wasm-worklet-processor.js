@@ -44,6 +44,7 @@ class WASMWorkletProcessor extends AudioWorkletProcessor {
     this._kernel = new Module.GainProcessor();
 
     this._order = 4;
+    console.log('constructor!');
     this._calculateChannelCount();
 
   }
@@ -60,8 +61,7 @@ class WASMWorkletProcessor extends AudioWorkletProcessor {
     if (Number(parameters.order) !== this._order) {
       this._order = Number(parameters.order);
       this._calculateChannelCount();
-      // console.log(parameters.order);
-      // console.log(this._order);
+      console.log(Number(parameters.order) === this._order);
     }
 
 
