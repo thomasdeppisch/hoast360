@@ -9,6 +9,8 @@
 	  <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
 		<!-- <link href="https://vjs.zencdn.net/7.6.0/video-js.css" rel="stylesheet"> -->
 		<link rel="stylesheet" type="text/css" href="./css/hoast.css">
+
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha256-pasqAKBDmFT4eHoN2ndd6lN370kFiGUFyTiUHWhU7k8=" crossorigin="anonymous"></script>
 	</head>
 	<body>
 
@@ -27,10 +29,22 @@
 		    <a href='https://videojs.com/html5-video-support/' target='_blank'>supports HTML5 video</a>
 		  </p>
 		</video-js>
+    <button id="start1">start1</button>
+    <button id="start2">start2</button>
+    <button id="stop">stop</button>
 
 		<script src="./dist/hoast360.bundle.js"></script>
 		<script>
-			hoast360.initialize("media/2015_VokalTotal/", 4);
+      $("#start1").click(function() {
+        hoast360.initialize("media/2015_VokalTotal/", 4);
+      });
+      $("#start2").click(function() {
+        hoast360.initialize("media/trelotechnika_ambix/", 3);
+      });
+      $("#stop").click(function() {
+        hoast360.stop();
+      })
+
 		</script>
 
 	</body>

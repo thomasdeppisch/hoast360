@@ -7,6 +7,8 @@ import MatrixMultiplier from './dependencies/MatrixMultiplier.js';
 import {zoom, zoomfactors} from './dependencies/zoom.js';
 import './css/video-js.css';
 
+"use strict";
+
 var order,
 		chCounts,	// how many channels per file (including empty LFE channels)
 		chStrings, // strings describing contained audio channels (excluding empty LFE channels)
@@ -27,12 +29,26 @@ var order,
 
 var maxOrder = 4;
 var tracksPerAudioPlayer = 7;
+var maxTracksPerAudioFile = 8;
 var maxNrOfAudioPlayers = Math.ceil((maxOrder + 1) * (maxOrder + 1) / tracksPerAudioPlayer);
+
+var AudioContext = window.AudioContext // Default
+                || window.webkitAudioContext; // safari
+context = new AudioContext;
+console.log(context);
 
 // create as many audio players as we need for max order
 for (let i = 0; i < maxNrOfAudioPlayers; ++i) {
 	audioElements[i] = new Audio();
 	audioPlayers[i] = dashjs.MediaPlayer().create();
+  audioPlayers[i].initialize(audioElements[i]);
+  audioPlayers[i].setAutoPlay(false);
+
+  // create sourceNodes and connect to splitters as we cannot disconnect these and reuse
+  // (HTMLMediaElement already connected ...)
+  channelSplitters[i] = context.createChannelSplitter(maxTracksPerAudioFile);
+  sourceNodes[i] = context.createMediaElementSource(audioElements[i]);
+  sourceNodes[i].connect(channelSplitters[i]);
 }
 
 var videoPlayer = videojs('videojs-player');
@@ -41,6 +57,12 @@ console.log(videoPlayer);
 console.log(videoPlayer.vr());
 
 export function initialize(newMediaUrl, newOrder) {
+  console.log("start initialization");
+  wasPaused = true;
+  waitingForPlayback = false;
+  audioSetupComplete = false;
+  videoSetupComplete = false;
+
 	order = newOrder;
 	mediaUrl = newMediaUrl;
 	setOrderDependentVariables();
@@ -57,7 +79,7 @@ export function initialize(newMediaUrl, newOrder) {
 	// });
 
 	for (let i = 0; i < nrActiveAudioPlayers; ++i) {
-		audioPlayers[i].initialize(audioElements[i], mediaUrl + "audio_" + chStrings[i] + ".mpd", false);
+    audioPlayers[i].attachSource(mediaUrl + "audio_" + chStrings[i] + ".mpd");
 	  // console.log(audioPlayers[i]);
 	  // console.log(audioPlayers[i].getVideoElement());
 	}
@@ -72,9 +94,27 @@ export function initialize(newMediaUrl, newOrder) {
 	});
 
 	videoPlayer.vr().on( "initialized", function() {
+    console.log("vr initialized");
 		startSetup();
 		handleEvents();
 	});
+}
+
+export function stop() {
+  console.log("stopping");
+  videoPlayer.pause();
+  disconnectAudio();
+}
+
+function disconnectAudio() {
+  for (let i = 0; i < nrActiveAudioPlayers; ++i) {
+    channelSplitters[i].disconnect();
+  }
+  channelMerger.disconnect();
+  rotator.out.disconnect();
+  multiplier.out.disconnect();
+  decoder.out.disconnect();
+  masterGain.disconnect();
 }
 
 function handleEvents() {
@@ -111,7 +151,7 @@ function handleEvents() {
 	});
 
 	// now make sure that audio and video always starts in sync and waits for each other when loading
-	for (let i in audioPlayers) {
+	for (let i = 0; i < nrActiveAudioPlayers; ++i) {
 		audioPlayers[i].on(dashjs.MediaPlayer.events["CAN_PLAY"], function() {
 			console.log("audio canplay");
 			tryResumePlayback();
@@ -137,7 +177,7 @@ function handleEvents() {
 	videoPlayer.on("play", function() {
 		console.log("play");
 
-		for (let i in audioPlayers) {
+		for (let i = 0; i < nrActiveAudioPlayers; ++i) {
 			audioPlayers[i].play();
 		}
 	});
@@ -152,7 +192,7 @@ function handleEvents() {
 
 	videoPlayer.on("pause", function() {
 		console.log("pause");
-		for (let i in audioPlayers) {
+		for (let i = 0; i < nrActiveAudioPlayers; ++i) {
 			audioPlayers[i].pause();
 		}
 	});
@@ -161,7 +201,7 @@ function handleEvents() {
 		console.log("seeking!");
 		startWaitingRoutine();
 
-		for (let i in audioPlayers) {
+		for (let i = 0; i < nrActiveAudioPlayers; ++i) {
 			audioPlayers[i].seek(this.currentTime());
 		}
 	});
@@ -229,7 +269,7 @@ function tryResumePlayback() {
 
 function readyForPlayback() {
 	if (videoPlayer.readyState() >= 3
-			&& audioPlayers.every(p => p.getVideoElement().readyState === 4)
+			&& audioPlayers.every(p => (p.getVideoElement().readyState === 4) || (p.getVideoElement().readyState === 0)) // either playback ready or no source set
 			&& allBuffersLoaded)
 			return true;
 	else
@@ -250,14 +290,6 @@ function startSetup() {
 function setupAudio() {
 	console.log("setup audio!");
 	allBuffersLoaded = false;
-
-	var AudioContext = window.AudioContext // Default
-									|| window.webkitAudioContext; // safari
-	context = new AudioContext;
-	console.log(context);
-
-	// this is needed to enable WAA with Safari, still if used in combination with dash.js this is not enough...
-	// unlockAudioContext(context);
 
 	channelMerger = context.createChannelMerger(numCh);
 	console.log(channelMerger);
@@ -283,13 +315,11 @@ function setupAudio() {
 	masterGain = context.createGain();
 	masterGain.gain.value = 1.0;
 
-	for (let i in audioPlayers) {
-		channelSplitters[i] = context.createChannelSplitter(chCounts[i]);
-		sourceNodes[i] = context.createMediaElementSource(audioElements[i]);
+  for (let i = 0; i < nrActiveAudioPlayers; ++i) {
+    // console.log(channelSplitters[i]);
 		sourceNodes[i].channelCount = chCounts[i];
 		// console.log($("#audio_" + chStrings[i])[0]);
 		// console.log(sourceNodes[i]);
-		sourceNodes[i].connect(channelSplitters[i]);
 	}
 
 	connectChannels();
@@ -385,7 +415,6 @@ function connectChannels() {
 					continue;
 
 				// console.log("in: "+channelMapping7ch[ch]+", out: "+totalChannelCount);
-
 				channelSplitters[i].connect(channelMerger, channelMapping7ch[ch], totalChannelCount);
 			} else {
 				// no remapping needed
