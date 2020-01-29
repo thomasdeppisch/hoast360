@@ -9,7 +9,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack -d",
-    "build-wasm": "em++ --bind -O2 -s WASM=1 -s BINARYEN_ASYNC_COMPILATION=0 -s SINGLE_FILE=1 ./HoastProcessor/HoastProcessor.cpp -o ./HoastProcessor/hoast-processor.wasmmodule.js --post-js ./lib/wasm-audio-helper.js --post-js ./HoastProcessor/hoast-worklet-processor.js",
+    "build-wasm": "em++ --bind -O2 -msimd128 -s WASM=1 -s BINARYEN_ASYNC_COMPILATION=0 -s SINGLE_FILE=1 ./HoastProcessor/HoastProcessor.cpp -o ./HoastProcessor/hoast-processor.wasmmodule.js --post-js ./lib/wasm-audio-helper.js --post-js ./HoastProcessor/hoast-worklet-processor.js",
     "build-all": "npm run build-wasm && npm run build" 
   },
   "repository": {
