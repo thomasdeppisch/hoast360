@@ -5,3 +5,5 @@ dependencies/videojs-vr/
 media/
 *.pem
 node_modules/*
+.vscode/
+*.code*

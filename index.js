@@ -1,4 +1,7 @@
 import 'audioworklet-polyfill';
+
+"use strict";
+
 var $ = require("jquery");
 
 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -25,23 +28,23 @@ console.log(channelMerger);
 connectChannels();
 
 // Loads module script via AudioWorklet.
-context.audioWorklet.addModule('gain-processor.wasmmodule.js').then(() => {
+context.audioWorklet.addModule('./hoastProcessor/hoast-processor.wasmmodule.js').then(() => {
   // After the resolution of module loading, an AudioWorkletNode can be
   // constructed.
-  let gainWorkletNode = new AudioWorkletNode(context, 'wasm-worklet-processor',
+  let hoastWorkletNode = new AudioWorkletNode(context, 'hoast-worklet-processor',
                                             {
                                             "processorOptions": {
                                               "order": order,
                                               "samplerate": context.sampleRate
                                             }});
-  gainWorkletNode.channelCount = numChannels;
-  console.log(gainWorkletNode);
+  // gainWorkletNode.channelCount = numChannels;
+  // console.log(gainWorkletNode);
   // const orderParam = gainWorkletNode.parameters.get('azim');
   // orderParam.value = 3;
   // console.log(orderParam);
 
   // AudioWorkletNode can be interoperable with other native AudioNodes.
-  channelMerger.connect(gainWorkletNode).connect(context.destination);
+  channelMerger.connect(hoastWorkletNode).connect(context.destination);
 
 });
 

@@ -21,7 +21,7 @@
  * @class WASMWorkletProcessor
  * @extends AudioWorkletProcessor
  */
-class WASMWorkletProcessor extends AudioWorkletProcessor {
+class HOASTWorkletProcessor extends AudioWorkletProcessor {
   static get parameterDescriptors() {
     return [{
       name: 'azim',
@@ -55,7 +55,7 @@ class WASMWorkletProcessor extends AudioWorkletProcessor {
     this._heapOutputBuffer = new HeapAudioBuffer(Module, RENDER_QUANTUM_FRAMES,
                                                 this._channelCount, MAX_CHANNEL_COUNT);
 
-    this._kernel = new Module.GainProcessor();
+    this._kernel = new Module.HoastProcessor();
 
     console.log(this);
   }
@@ -108,4 +108,4 @@ class WASMWorkletProcessor extends AudioWorkletProcessor {
 }
 
 
-registerProcessor('wasm-worklet-processor', WASMWorkletProcessor);
+registerProcessor('hoast-worklet-processor', HOASTWorkletProcessor);
