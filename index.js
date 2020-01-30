@@ -13,7 +13,7 @@ var order,
 		chCounts,	// how many channels per file (including empty LFE channels)
 		chStrings, // strings describing contained audio channels (excluding empty LFE channels)
 		nrActiveAudioPlayers,
-		irs = "irs/mls_o4_rev.wav",
+		irs = "staticfiles/irs/mls_o4_rev.wav",
 		mediaUrl,
     audioElements = [],
 		audioPlayers = [],
