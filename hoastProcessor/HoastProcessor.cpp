@@ -6,10 +6,20 @@
 //  Copyright © 2020 Thomas Deppisch. All rights reserved.
 //
 
-#include <wasm_simd128.h>
 #include "HoastProcessor.h"
+#include <math.h>
+#include <stdio.h>
 
-HoastProcessor::HoastProcessor() {}
+HoastProcessor::HoastProcessor(int new_order) :
+  order(new_order), numShChannels((new_order + 1) + (new_order + 1)), rotMtxRowColSize(numShChannels - 1)
+{
+  // we do not need to rotate zeroth-order -> array size ((N+1)^2 - 1) x ((N+1)^2 - 1)
+  shRotationMatrix = new float[rotMtxRowColSize * rotMtxRowColSize];
+}
+
+HoastProcessor::~HoastProcessor() {
+  delete[] shRotationMatrix;
+}
 
 void HoastProcessor::Process(uintptr_t input_ptr, uintptr_t output_ptr, unsigned channel_count)
 {
@@ -27,69 +37,63 @@ void HoastProcessor::Process(uintptr_t input_ptr, uintptr_t output_ptr, unsigned
   }
 }
 
-// void HoastProcessor::calcRotationMatrix (const int order, float yaw_rad, float pitch_rad)
-// {
-//     auto ca = std::cos(yaw_rad);
-//     auto cb = std::cos(pitch_rad);
-//     auto sa = std::sin(yaw_rad);
-//     auto sb = std::sin(pitch_rad);
+void HoastProcessor::calcRotationMatrix(float yaw_rad, float pitch_rad)
+{
+    float ca = cosf(yaw_rad);
+    float cb = cosf(pitch_rad);
+    float sa = sinf(yaw_rad);
+    float sb = sinf(pitch_rad);
 
-//     Matrix<float> rotMat (3, 3);
-//     rotMat(0, 0) = ca * cb;
-//     rotMat(1, 0) = sa * cb;
-//     rotMat(2, 0) = -sb;
-//     rotMat(0, 1) = -sa;
-//     rotMat(1, 1) = ca;
-//     rotMat(2, 1) = 0.0f;
-//     rotMat(0, 2) = ca * sb;
-//     rotMat(1, 2) = sa * sb;
-//     rotMat(2, 2) = cb;
+    // first-order rotation matrix is directly related to cartesian rotation matrix (yaw-pitch-roll, zyx convention)
+    shRotationMatrix[0] = ca;
+    shRotationMatrix[1] = 0.0f;
+    shRotationMatrix[2] = sa;
+    shRotationMatrix[0 + rotMtxRowColSize] = sa * sb;
+    shRotationMatrix[1 + rotMtxRowColSize] = cb;
+    shRotationMatrix[2 + rotMtxRowColSize] = ca * sb;
+    shRotationMatrix[0 + 2 * rotMtxRowColSize] = -sa * cb;
+    shRotationMatrix[1 + 2 * rotMtxRowColSize] = sb;
+    shRotationMatrix[2 + 2 * rotMtxRowColSize] = ca * cb;
 
-//     // first order rotation matrix
-//     auto r1 = orderMatrices[1];
+    for(int i = 0; i < rotMtxRowColSize; i++) {
+        for(int j = 0; j < rotMtxRowColSize; j++) {
+            printf("%f ", shRotationMatrix[j + i * rotMtxRowColSize]);
+        }
+        printf("\n");
+    } 
 
-//     r1->operator() (0, 0) = rotMat(1, 1);
-//     r1->operator() (0, 1) = rotMat(1, 2);
-//     r1->operator() (0, 2) = rotMat(1, 0);
-//     r1->operator() (1, 0) = rotMat(2, 1);
-//     r1->operator() (1, 1) = rotMat(2, 2);
-//     r1->operator() (1, 2) = rotMat(2, 0);
-//     r1->operator() (2, 0) = rotMat(0, 1);
-//     r1->operator() (2, 1) = rotMat(0, 2);
-//     r1->operator() (2, 2) = rotMat(0, 0);
+    // for (int l = 2; l <= order; ++l)
+    // {
+    //     auto Rone = orderMatrices[1];
+    //     auto Rlm1 = orderMatrices[l - 1];
+    //     auto r1 = orderMatrices[l];
+    //     for (int m = -l; m <= l; ++m)
+    //     {
+    //         for (int n = -l; n <= l; ++n)
+    //         {
+    //             const int d = (m == 0) ? 1 : 0;
+    //             double denom;
+    //             if (abs(n) == l)
+    //                 denom = (2 * l) * (2 * l - 1);
+    //             else
+    //                 denom = l * l - n * n;
 
-//     for (int l = 2; l <= order; ++l)
-//     {
-//         auto Rone = orderMatrices[1];
-//         auto Rlm1 = orderMatrices[l - 1];
-//         auto r1 = orderMatrices[l];
-//         for (int m = -l; m <= l; ++m)
-//         {
-//             for (int n = -l; n <= l; ++n)
-//             {
-//                 const int d = (m == 0) ? 1 : 0;
-//                 double denom;
-//                 if (abs(n) == l)
-//                     denom = (2 * l) * (2 * l - 1);
-//                 else
-//                     denom = l * l - n * n;
+    //             double u = sqrt((l * l - m * m) / denom);
+    //             double v = sqrt((1.0 + d) * (l + abs(m) - 1.0) * (l + abs(m)) / denom) * (1.0 - 2.0 * d) * 0.5;
+    //             double w = sqrt((l - abs(m) - 1.0) * (l - abs(m)) / denom) * (1.0 - d) * (-0.5);
 
-//                 double u = sqrt((l * l - m * m) / denom);
-//                 double v = sqrt((1.0 + d) * (l + abs(m) - 1.0) * (l + abs(m)) / denom) * (1.0 - 2.0 * d) * 0.5;
-//                 double w = sqrt((l - abs(m) - 1.0) * (l - abs(m)) / denom) * (1.0 - d) * (-0.5);
+    //             if (u != 0.0)
+    //                 u *= U (l, m, n, *Rone, *Rlm1);
+    //             if (v != 0.0)
+    //                 v *= V (l, m, n, *Rone, *Rlm1);
+    //             if (w != 0.0)
+    //                 w *= W (l, m, n, *Rone, *Rlm1);
 
-//                 if (u != 0.0)
-//                     u *= U (l, m, n, *Rone, *Rlm1);
-//                 if (v != 0.0)
-//                     v *= V (l, m, n, *Rone, *Rlm1);
-//                 if (w != 0.0)
-//                     w *= W (l, m, n, *Rone, *Rlm1);
-
-//                 r1->operator() (m + l, n + l) = u + v + w;
-//             }
-//         }
-//     }
-// }
+    //             r1->operator() (m + l, n + l) = u + v + w;
+    //         }
+    //     }
+    // }
+}
 
 // double HoastProcessor::P (int i, int l, int a, int b, Matrix<float>& R1, Matrix<float>& Rlm1)
 // {

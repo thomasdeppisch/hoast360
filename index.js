@@ -37,13 +37,12 @@ context.audioWorklet.addModule('./hoastProcessor/hoast-processor.wasmmodule.js')
                                               "order": order,
                                               "samplerate": context.sampleRate
                                             }});
-  // gainWorkletNode.channelCount = numChannels;
-  // console.log(gainWorkletNode);
-  // const orderParam = gainWorkletNode.parameters.get('azim');
-  // orderParam.value = 3;
-  // console.log(orderParam);
 
-  // AudioWorkletNode can be interoperable with other native AudioNodes.
+  const paramAzimRad = hoastWorkletNode.parameters.get('azimRad');
+  const paramElevRad = hoastWorkletNode.parameters.get('elevRad');
+  paramAzimRad.value = 20 * Math.PI / 180;
+  paramElevRad.value = 10 * Math.PI / 180;
+  
   channelMerger.connect(hoastWorkletNode).connect(context.destination);
 
 });

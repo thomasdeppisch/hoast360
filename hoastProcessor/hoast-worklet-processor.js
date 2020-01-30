@@ -24,15 +24,15 @@
 class HOASTWorkletProcessor extends AudioWorkletProcessor {
   static get parameterDescriptors() {
     return [{
-      name: 'azim',
+      name: 'azimRad',
       defaultValue: 0,
-      minValue: -180,
-      maxValue: 180
+      minValue: -Math.PI,
+      maxValue: Math.PI
     },{
-      name: 'elev',
+      name: 'elevRad',
       defaultValue: 0,
-      minValue: -90,
-      maxValue: 90
+      minValue: -Math.PI/2,
+      maxValue: Math.PI/2
     }];
   }
 
@@ -55,7 +55,8 @@ class HOASTWorkletProcessor extends AudioWorkletProcessor {
     this._heapOutputBuffer = new HeapAudioBuffer(Module, RENDER_QUANTUM_FRAMES,
                                                 this._channelCount, MAX_CHANNEL_COUNT);
 
-    this._kernel = new Module.HoastProcessor();
+    this._kernel = new Module.HoastProcessor(this._order);
+    this._kernel.calculateRotationMatrix(parameters.azimRad.value, parameters.elevRad.value);
 
     console.log(this);
   }
@@ -72,20 +73,17 @@ class HOASTWorkletProcessor extends AudioWorkletProcessor {
     let input = inputs[0];
     let output = outputs[0];
 
-    // parameters.azim
-
     if (this._channelCount !== input.length)
     {
       console.error('nr of input channels (' + input.length + ') does not match channelCount (' + this._channelCount + ')');
       return false;
     }
 
-    // Prepare HeapAudioBuffer for the channel count change in the current
-    // render quantum.
-    // this._heapInputBuffer.adaptChannel(this._channelCount);
-    // this._heapOutputBuffer.adaptChannel(this._channelCount);
-
-    // Copy-in, process and copy-out.
+    if (this._hasParameterChanged()) {
+      console.log("param change");
+      this._kernel.calculateRotationMatrix(parameters.azimRad.value, parameters.elevRad.value);
+    }
+    
     for (let channel = 0; channel < this._channelCount; ++channel) {
       this._heapInputBuffer.getChannelData(channel).set(input[channel]);
     }
@@ -103,6 +101,11 @@ class HOASTWorkletProcessor extends AudioWorkletProcessor {
   _calculateChannelCount() {
     console.log("_calculateChannelCount");
     this._channelCount = (this._order + 1) * (this._order + 1);
+  }
+
+  _hasParameterChanged() {
+    // is this sufficient?
+    return (parameters.azimRad.length !== 1 || parameters.elevRad.length !== 1);
   }
 
 }
