@@ -54,9 +54,12 @@ class HOASTWorkletProcessor extends AudioWorkletProcessor {
                                                 this._channelCount, MAX_CHANNEL_COUNT);
     this._heapOutputBuffer = new HeapAudioBuffer(Module, RENDER_QUANTUM_FRAMES,
                                                 this._channelCount, MAX_CHANNEL_COUNT);
-
+    // console.log(options);
+    // console.log(parameters);
     this._kernel = new Module.HoastProcessor(this._order);
-    this._kernel.calculateRotationMatrix(parameters.azimRad.value, parameters.elevRad.value);
+
+    this._oldAzim = 0;
+    this._oldElev = 0;
 
     console.log(this);
   }
@@ -79,9 +82,11 @@ class HOASTWorkletProcessor extends AudioWorkletProcessor {
       return false;
     }
 
-    if (this._hasParameterChanged()) {
+    if (this._hasParameterChanged(parameters)) {
       console.log("param change");
-      this._kernel.calculateRotationMatrix(parameters.azimRad.value, parameters.elevRad.value);
+      // console.log(Number(parameters.azimRad));
+      // console.log(Number(parameters.elevRad));
+      this._kernel.calculateRotationMatrix(Number(parameters.azimRad), Number(parameters.elevRad));
     }
     
     for (let channel = 0; channel < this._channelCount; ++channel) {
@@ -103,9 +108,17 @@ class HOASTWorkletProcessor extends AudioWorkletProcessor {
     this._channelCount = (this._order + 1) * (this._order + 1);
   }
 
-  _hasParameterChanged() {
+  _hasParameterChanged(params) {
     // is this sufficient?
-    return (parameters.azimRad.length !== 1 || parameters.elevRad.length !== 1);
+    if (params.azimRad.length !== 1 || params.elevRad.length !== 1 || 
+        this._oldAzim !== params.azimRad || this._oldElev !== params.elevRad) {
+          this._oldAzim = params.azimRad;
+          this._oldElev = params.elevRad;
+          return true;
+        }
+        else {
+          return false;
+        }
   }
 
 }
