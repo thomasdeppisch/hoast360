@@ -22,104 +22,120 @@
  * @extends AudioWorkletProcessor
  */
 class HOASTWorkletProcessor extends AudioWorkletProcessor {
-  static get parameterDescriptors() {
-    return [{
-      name: 'azimRad',
-      defaultValue: 0,
-      minValue: -Math.PI,
-      maxValue: Math.PI
-    },{
-      name: 'elevRad',
-      defaultValue: 0,
-      minValue: -Math.PI/2,
-      maxValue: Math.PI/2
-    }];
-  }
-
-  constructor(options) {
-    super();
-
-    console.log("processor options: ");
-    console.log(options);
-    this._order = options.processorOptions.order;
-    this._sampleRate = options.processorOptions.samplerate;
-    this._calculateChannelCount();
-
-    console.log('order: ' + this._order);
-    console.log('channelCount: ' + this._channelCount);
-
-    // Allocate the buffer for the heap access. Start with stereo, but it can
-    // be expanded up to 32 channels.
-    this._heapInputBuffer = new HeapAudioBuffer(Module, RENDER_QUANTUM_FRAMES,
-                                                this._channelCount, MAX_CHANNEL_COUNT);
-    this._heapOutputBuffer = new HeapAudioBuffer(Module, RENDER_QUANTUM_FRAMES,
-                                                this._channelCount, MAX_CHANNEL_COUNT);
-    // console.log(options);
-    // console.log(parameters);
-    this._kernel = new Module.HoastProcessor(this._order);
-
-    this._oldAzim = 0;
-    this._oldElev = 0;
-
-    console.log(this);
-  }
-
-  /**
-   * System-invoked process callback function.
-   * @param  {Array} inputs Incoming audio stream.
-   * @param  {Array} outputs Outgoing audio stream.
-   * @param  {Object} parameters AudioParam data.
-   * @return {Boolean} Active source flag.
-   */
-  process(inputs, outputs, parameters) {
-
-    let input = inputs[0];
-    let output = outputs[0];
-
-    if (this._channelCount !== input.length)
-    {
-      console.error('nr of input channels (' + input.length + ') does not match channelCount (' + this._channelCount + ')');
-      return false;
+    static get parameterDescriptors() {
+        return [{
+            name: 'azimRad',
+            defaultValue: 0,
+            minValue: -Math.PI,
+            maxValue: Math.PI
+        }, {
+            name: 'elevRad',
+            defaultValue: 0,
+            minValue: -Math.PI / 2,
+            maxValue: Math.PI / 2
+        }];
     }
 
-    if (this._hasParameterChanged(parameters)) {
-      console.log("param change");
-      // console.log(Number(parameters.azimRad));
-      // console.log(Number(parameters.elevRad));
-      this._kernel.calculateRotationMatrix(Number(parameters.azimRad), Number(parameters.elevRad));
-    }
-    
-    for (let channel = 0; channel < this._channelCount; ++channel) {
-      this._heapInputBuffer.getChannelData(channel).set(input[channel]);
-    }
-    this._kernel.process(this._heapInputBuffer.getHeapAddress(),
-                         this._heapOutputBuffer.getHeapAddress(),
-                         this._channelCount);
-    for (let channel = 0; channel < this._channelCount; ++channel) {
-      output[channel].set(this._heapOutputBuffer.getChannelData(channel));
-      // output[channel].set(this._heapInputBuffer.getChannelData(channel));
+    constructor(options) {
+        super();
+
+        console.log("processor options: ");
+        console.log(options);
+        this._order = options.processorOptions.order;
+        this._sampleRate = options.processorOptions.samplerate;
+        this._calculateChannelCount();
+
+        console.log('order: ' + this._order);
+        console.log('channelCount: ' + this._channelCount);
+
+        // Allocate the buffer for the heap access. Start with stereo, but it can
+        // be expanded up to 32 channels.
+        this._heapInputBuffer = new HeapAudioBuffer(Module, RENDER_QUANTUM_FRAMES,
+            this._channelCount, MAX_CHANNEL_COUNT);
+        this._heapOutputBuffer = new HeapAudioBuffer(Module, RENDER_QUANTUM_FRAMES,
+            this._channelCount, MAX_CHANNEL_COUNT);
+        // console.log(options);
+        // console.log(parameters);
+        this._kernel = new Module.HoastProcessor(this._order);
+
+        // this._oldAzim = 0;
+        // this._oldElev = 0;
+        this._paramChanged = true;
+
+        console.log(this);
+
+        this.port.onmessage = (event) => {
+            // Handling data from the node.
+            console.log('message received');
+            if (event.data == 'paramChange') {
+                console.log(event.data);
+                this._paramChanged = true;
+            }
+        };
+      
     }
 
-    return true;
-  }
+    /**
+     * System-invoked process callback function.
+     * @param  {Array} inputs Incoming audio stream.
+     * @param  {Array} outputs Outgoing audio stream.
+     * @param  {Object} parameters AudioParam data.
+     * @return {Boolean} Active source flag.
+     */
+    process(inputs, outputs, parameters) {
 
-  _calculateChannelCount() {
-    console.log("_calculateChannelCount");
-    this._channelCount = (this._order + 1) * (this._order + 1);
-  }
+        let input = inputs[0];
+        let output = outputs[0];
 
-  _hasParameterChanged(params) {
-    // is this sufficient?
-    if (params.azimRad.length !== 1 || params.elevRad.length !== 1 || 
-        this._oldAzim !== params.azimRad || this._oldElev !== params.elevRad) {
-          this._oldAzim = params.azimRad;
-          this._oldElev = params.elevRad;
-          return true;
+        if (this._channelCount !== input.length) {
+            console.error('nr of input channels (' + input.length + ') does not match channelCount (' + this._channelCount + ')');
+            return false;
         }
-        else {
-          return false;
+
+        if (this._paramChanged) {
+            this._paramChanged = false;
+            // console.log(Number(parameters.azimRad));
+            // console.log(Number(parameters.elevRad));
+            console.log('calculate rotation matrix');
+            console.log(parameters.azimRad);
+            console.log(parameters.elevRad);
+            this._kernel.calculateRotationMatrix(Number(parameters.azimRad), Number(parameters.elevRad));
         }
-  }
+
+        for (let channel = 0; channel < this._channelCount; ++channel) {
+            this._heapInputBuffer.getChannelData(channel).set(input[channel]);
+        }
+        this._kernel.process(this._heapInputBuffer.getHeapAddress(),
+            this._heapOutputBuffer.getHeapAddress(),
+            this._channelCount);
+        for (let channel = 0; channel < this._channelCount; ++channel) {
+            output[channel].set(this._heapOutputBuffer.getChannelData(channel));
+            // output[channel].set(this._heapInputBuffer.getChannelData(channel));
+        }
+
+        return true;
+    }
+
+    _calculateChannelCount() {
+        console.log("_calculateChannelCount");
+        this._channelCount = (this._order + 1) * (this._order + 1);
+    }
+
+    // _hasParameterChanged(params) {
+    //     // console.log("azimRad.length: " + (params.azimRad.length !== 1));
+    //     // console.log("elevRad.length: " + (params.elevRad.length !== 1));
+    //     // console.log("azim: " + (this._oldAzim !== params.azimRad));
+    //     // console.log("elev: " + (this._oldElev !== params.elevRad));
+    //     if (params.azimRad.length !== 1 || params.elevRad.length !== 1) { // todo: will this work?
+    //         //  || this._oldAzim !== params.azimRad || this._oldElev !== params.elevRad) {
+    //         this._oldAzim = params.azimRad;
+    //         this._oldElev = params.elevRad;
+    //         return true;
+    //     }
+    //     else {
+    //         return false;
+    //     }
+    // }
 
 }
 
