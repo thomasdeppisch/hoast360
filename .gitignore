@@ -5,3 +5,8 @@ dependencies/videojs-vr/
 media/
 node_modules/*
 *.pem
+*.wav
+*.webm
+*.opus
+*.mpd
+*.m4v

@@ -28,8 +28,8 @@ var order,
 		viewAzim, viewElev, hoabuffer, masterGain, numCh;
 
 var maxOrder = 4;
-var tracksPerAudioPlayer = 7;
-var maxTracksPerAudioFile = 8;
+var tracksPerAudioPlayer = 16;
+var maxTracksPerAudioFile = 16;
 var maxNrOfAudioPlayers = Math.ceil((maxOrder + 1) * (maxOrder + 1) / tracksPerAudioPlayer);
 
 var AudioContext = window.AudioContext // Default
@@ -80,8 +80,8 @@ export function initialize(newMediaUrl, newOrder) {
 
 	for (let i = 0; i < nrActiveAudioPlayers; ++i) {
     audioPlayers[i].attachSource(mediaUrl + "audio_" + chStrings[i] + ".mpd");
-	  // console.log(audioPlayers[i]);
-	  // console.log(audioPlayers[i].getVideoElement());
+	  console.log(audioPlayers[i]);
+	  console.log(audioPlayers[i].getVideoElement().readyState);
 	}
 
 	videoPlayer.ready(function() {
@@ -432,9 +432,9 @@ function setOrderDependentVariables() {
 
 	switch(order) {
 	  case 4:
-			chCounts = [8, 8, 8, 4];
-			chStrings = ["01-07ch", "08-14ch", "15-21ch", "22-25ch"];
-			nrActiveAudioPlayers = 4;
+			chCounts = [16, 9];
+			chStrings = ["01-16ch", "17-25ch"];
+			nrActiveAudioPlayers = 2;
 	    break;
 	  case 3:
 			chCounts = [8, 8, 2];
