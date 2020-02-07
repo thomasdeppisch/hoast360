@@ -35,7 +35,7 @@ ffmpeg \
  -adaptation_sets "id=0,streams=0,1,2,3,4" \
  "../webm_media/"$fn"/video.mpd"
 
-ffmpeg -f webm_dash_manifest -i "../sounds/webm/"$fn$"_01-08ch.webm" -c copy -map 0 -f webm_dash_manifest -adaptation_sets "id=0,streams=0" "../webm_media/"$fn"/audio_01-07ch.mpd"
-ffmpeg -f webm_dash_manifest -i "../sounds/webm/"$fn$"_09-16ch.webm" -c copy -map 0 -f webm_dash_manifest -adaptation_sets "id=0,streams=0" "../webm_media/"$fn"/audio_08-16ch.mpd"
+ffmpeg -f webm_dash_manifest -i "../sounds/webm/"$fn$"_01-08ch.webm" -c copy -map 0 -f webm_dash_manifest -adaptation_sets "id=0,streams=0" "../webm_media/"$fn"/audio_01-08ch.mpd"
+ffmpeg -f webm_dash_manifest -i "../sounds/webm/"$fn$"_09-16ch.webm" -c copy -map 0 -f webm_dash_manifest -adaptation_sets "id=0,streams=0" "../webm_media/"$fn"/audio_09-16ch.mpd"
 ffmpeg -f webm_dash_manifest -i "../sounds/webm/"$fn$"_17-24ch.webm" -c copy -map 0 -f webm_dash_manifest -adaptation_sets "id=0,streams=0" "../webm_media/"$fn"/audio_17-24ch.mpd"
 ffmpeg -f webm_dash_manifest -i "../sounds/webm/"$fn$"_25-25ch.webm" -c copy -map 0 -f webm_dash_manifest -adaptation_sets "id=0,streams=0" "../webm_media/"$fn"/audio_25-25ch.mpd"

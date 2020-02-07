@@ -7,7 +7,7 @@
 		<link rel="shortcut icon" type="image/jpg" href="img/favicon.jpg"/>
 		<!-- <link href="https://fonts.googleapis.com/css?family=Poiret+One" rel="stylesheet"> -->
 	  <!-- <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet"> -->
-		<!-- <link href="https://vjs.zencdn.net/7.6.0/video-js.css" rel="stylesheet"> -->
+		<link href="https://vjs.zencdn.net/7.6.0/video-js.css" rel="stylesheet">
 		<link rel="stylesheet" type="text/css" href="./css/hoast.css">
 
     <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha256-pasqAKBDmFT4eHoN2ndd6lN370kFiGUFyTiUHWhU7k8=" crossorigin="anonymous"></script>
@@ -17,16 +17,32 @@
 
 	</head>
 	<body>
-    <audio src="opustest/2015_VokalTotal_01-08ch.opus" controls></audio>
-    <audio src="opustest/2015_VokalTotal_01-08ch.webm" controls></audio>
-    <video data-dashjs-player autoplay src="opustest/manifest.mpd" controls></video>
-    <!-- <video-js id='videojs-player' src='opustest/video.mpd' class='video-js vjs-big-play-centered' controls preload='auto' width='800' height='400' crossorigin="anonymous" data-setup='{}'>
-  	  <p class='vjs-no-js'>
-  	    To view this video please enable JavaScript, and consider upgrading to a web browser that
-  	    <a href='https://videojs.com/html5-video-support/' target='_blank'>supports HTML5 video</a>
-  	  </p>
-  	</video-js> -->
+    <!-- <audio src="opustest/2015_VokalTotal_01-08ch.opus" controls></audio>
+    <audio src="opustest/2015_VokalTotal_01-08ch.webm" controls></audio> -->
+    <!-- <video data-dashjs-player autoplay src="opustest/video.mpd" controls></video> -->
+    <video-js id='videojs-player' class='vjs-default-skin video-js vjs-big-play-centered' controls preload='auto' width='800' height='400' crossorigin="anonymous" data-setup='{}'>
+		  <p class='vjs-no-js'>
+		    To view this video please enable JavaScript, and consider upgrading to a web browser that
+		    <a href='https://videojs.com/html5-video-support/' target='_blank'>supports HTML5 video</a>
+		  </p>
+		</video-js>
+    <!-- <video-js id=vid1 width=600 height=300 class="vjs-default-skin" controls>
+      <source
+         src="opustest/video.mpd"
+         type="application/dash+xml">
+    </video-js>
+    <script>
+    var player = videojs('vid1');
+    player.play();
+    </script> -->
 
+    <script>
+      var videoPlayer = videojs('videojs-player');
+      // videoPlayer.vr({projection: '360'});
+      // console.log(videoPlayer);
+      // console.log(videoPlayer.vr());
+      videoPlayer.src({type: 'application/dash+xml', src: 'opustest/video.mpd'});
+    </script>
 
 
 

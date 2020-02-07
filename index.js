@@ -1,6 +1,7 @@
 import $ from 'jquery';
 import 'dashjs';
 import videojs from 'video.js';
+import 'videojs-contrib-dash'
 import './dependencies/videojs-vr.min.js';
 import * as ambisonics from 'ambisonics';
 import MatrixMultiplier from './dependencies/MatrixMultiplier.js';
@@ -28,8 +29,8 @@ var order,
 		viewAzim, viewElev, hoabuffer, masterGain, numCh;
 
 var maxOrder = 4;
-var tracksPerAudioPlayer = 16;
-var maxTracksPerAudioFile = 16;
+var tracksPerAudioPlayer = 8;
+var maxTracksPerAudioFile = 8;
 var maxNrOfAudioPlayers = Math.ceil((maxOrder + 1) * (maxOrder + 1) / tracksPerAudioPlayer);
 
 var AudioContext = window.AudioContext // Default
@@ -432,9 +433,9 @@ function setOrderDependentVariables() {
 
 	switch(order) {
 	  case 4:
-			chCounts = [16, 9];
-			chStrings = ["01-16ch", "17-25ch"];
-			nrActiveAudioPlayers = 2;
+			chCounts = [8, 8, 8, 1];
+			chStrings = ["01-08ch", "09-16ch", "17-24ch", "25-25ch"];
+			nrActiveAudioPlayers = 4;
 	    break;
 	  case 3:
 			chCounts = [8, 8, 2];
