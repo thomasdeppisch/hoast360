@@ -81,8 +81,8 @@ export function initialize(newMediaUrl, newOrder) {
 
 	for (let i = 0; i < nrActiveAudioPlayers; ++i) {
     audioPlayers[i].attachSource(mediaUrl + "audio_" + chStrings[i] + ".mpd");
-	  console.log(audioPlayers[i]);
-	  console.log(audioPlayers[i].getVideoElement().readyState);
+	  // console.log(audioPlayers[i]);
+	  // console.log(audioPlayers[i].getVideoElement().readyState);
 	}
 
 	videoPlayer.ready(function() {
@@ -383,45 +383,35 @@ function connectChannels() {
 	// channelSplitters[0].connect(channelMerger, 0, 0);
 	// channelMerger.connect(context.destination);
 
-	let channelMapping7ch = [];
-
-  if (navigator.userAgent.indexOf("Chrome") != -1 )
-  {
-  	console.log("Chrome");
-		channelMapping7ch = [0, 1, 2, -1, 3, 4, 5, 6];
-  }
-  else if(navigator.userAgent.indexOf("Safari") != -1)
-  {
-  	console.error("Safari NOT SUPPORTED YET");
-		channelMapping7ch = [1, 2, 0, 5, 6, 3, 4, -1];
-  }
-  else if(navigator.userAgent.indexOf("Firefox") != -1 )
-  {
-  	console.log("Firefox");
-		channelMapping7ch = [1, 2, 0, 5, 6, 3, 4, -1];
-		// let firefoxChannelMapping4ch = [0, 1, 2, 3];
-		// let firefoxChannelMapping2ch = [0, 1];
-
-  }
-  else
-  {
-  	console.error("Unsupported browser detected, player might not work as expected!");
-  }
-
+	// let channelMapping7ch = [];
+  //
+  // if (navigator.userAgent.indexOf("Chrome") != -1 )
+  // {
+  // 	console.log("Chrome");
+	// 	channelMapping7ch = [0, 1, 2, -1, 3, 4, 5, 6];
+  // }
+  // else if(navigator.userAgent.indexOf("Safari") != -1)
+  // {
+  // 	console.error("Safari NOT SUPPORTED YET");
+	// 	channelMapping7ch = [1, 2, 0, 5, 6, 3, 4, -1];
+  // }
+  // else if(navigator.userAgent.indexOf("Firefox") != -1 )
+  // {
+  // 	console.log("Firefox");
+	// 	channelMapping7ch = [1, 2, 0, 5, 6, 3, 4, -1];
+	// 	// let firefoxChannelMapping4ch = [0, 1, 2, 3];
+	// 	// let firefoxChannelMapping2ch = [0, 1];
+  //
+  // }
+  // else
+  // {
+  // 	console.error("Unsupported browser detected, player might not work as expected!");
+  // }
+  //
 	let totalChannelCount = 0;
 	for (let i = 0; i < nrActiveAudioPlayers; ++i) {
 		for (let ch = 0; ch < chCounts[i]; ++ch) {
-			if (chCounts[i] === 8) {
-				if (channelMapping7ch[ch] === -1) // channel is empty LFE channel, we can leave it out
-					continue;
-
-				// console.log("in: "+channelMapping7ch[ch]+", out: "+totalChannelCount);
-				channelSplitters[i].connect(channelMerger, channelMapping7ch[ch], totalChannelCount);
-			} else {
-				// no remapping needed
-				channelSplitters[i].connect(channelMerger, ch, totalChannelCount);
-			}
-
+			channelSplitters[i].connect(channelMerger, ch, totalChannelCount);
 			++totalChannelCount;
 		}
 	}
@@ -438,13 +428,13 @@ function setOrderDependentVariables() {
 			nrActiveAudioPlayers = 4;
 	    break;
 	  case 3:
-			chCounts = [8, 8, 2];
-			chStrings = ["01-07ch", "08-14ch", "15-16ch"];
+			chCounts = [8, 8];
+			chStrings = ["01-08ch", "09-16ch"];
 			nrActiveAudioPlayers = 3;
 	    break;
 		case 2:
-			chCounts = [8, 2];
-			chStrings = ["01-07ch", "08-9ch"];
+			chCounts = [8, 1];
+			chStrings = ["01-08ch", "09-09ch"];
 			nrActiveAudioPlayers = 2;
 			break;
 		case 1:

@@ -4,7 +4,7 @@
 clear all
 
 path = '../sounds/wavs/';
-filename = '2015_VokalTotal.wav';
+filename = '25ch_count.wav';
 order = 4;
 [sig,fs] = audioread([path,filename]);
 
