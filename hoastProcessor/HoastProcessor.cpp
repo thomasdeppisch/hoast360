@@ -25,12 +25,19 @@ HoastProcessor::HoastProcessor(int new_order) :
 
     // shRotationMatrix holds (2n+1) x (2n+1) order rotation submatrices in row-major
     shRotationMatrix = new float[rotMtxSize];
+    oldShRotationMatrix = new float[rotMtxSize];
     processingBuffer = new float[numShChannels * kRenderQuantumFrames];
+
+    // initialize shRotationMatrix and oldShRotationMatrix to identity
+    calculateRotationMatrix(0.0f, 0.0f); 
+    for (int i = 0; i < rotMtxSize; ++i)
+        *(oldShRotationMatrix + i) = *(shRotationMatrix + i);
 }
 
 HoastProcessor::~HoastProcessor()
 {
     delete[] shRotationMatrix;
+    delete[] oldShRotationMatrix;
     delete[] processingBuffer;
 }
 
@@ -46,11 +53,13 @@ void HoastProcessor::Process(uintptr_t input_ptr, uintptr_t output_ptr, unsigned
     for (int i = 1; i <= order; ++i) {
         thisOrderIdx += (2 * i - 1) * (2 * i - 1);
         int channelIdx = i * i * kRenderQuantumFrames;
-        matrixMultiply(input_buffer + channelIdx,
+        matrixMultiplyWithFade(input_buffer + channelIdx,
                        output_buffer + channelIdx,
-                       shRotationMatrix + thisOrderIdx, (2 * i + 1));
+                       shRotationMatrix + thisOrderIdx, 
+                       oldShRotationMatrix + thisOrderIdx,
+                       (2 * i + 1));
     }
-    //matrixMultiply(processingBuffer, output_buffer, zoomMatrix, channel_count);
+    //matrixMultiplyWithFade(processingBuffer, output_buffer, zoomMatrix, channel_count);
 
     // for (unsigned channel = 0; channel < channel_count; ++channel)
     // {
@@ -66,28 +75,34 @@ void HoastProcessor::Process(uintptr_t input_ptr, uintptr_t output_ptr, unsigned
     // }
 }
 
-void HoastProcessor::matrixMultiply(float *input_ptr, float *output_ptr, float *matrix_ptr, unsigned channel_count)
+void HoastProcessor::matrixMultiplyWithFade(float *input_ptr, float *output_ptr, float *matrix_ptr, float *old_matrix_ptr, unsigned channel_count)
 {
     // matrix multiplication: output = matrix * input
     // expects matrix to be (channel_count x channel_count), input and output to be (channel_count x kRenderQuantumFrames)
     for (unsigned out_channel = 0; out_channel < channel_count; ++out_channel) {
         float *destination_channel = output_ptr + out_channel * kRenderQuantumFrames;
         float *matrix_row = matrix_ptr + out_channel * channel_count; // only valid for quadratic matrix!
+        float *old_matrix_row = old_matrix_ptr + out_channel * channel_count;
 
         for (unsigned j = 0; j < kRenderQuantumFrames; ++j) {
             float *destination_smp = destination_channel + j;
             *(destination_smp) = 0.0f;
             for (unsigned k = 0; k < channel_count; ++k) {
-                *(destination_smp) += *(matrix_row + k) * *(input_ptr + (k * kRenderQuantumFrames) + j);
+                *(destination_smp) += (*(matrix_row + k) * static_cast<float>(j) / kRenderQuantumFrames + *(old_matrix_row + k) * (1 - static_cast<float>(j) / kRenderQuantumFrames))
+                                    * *(input_ptr + (k * kRenderQuantumFrames) + j);
             }
         }
-    }
-                
+    }   
 }
 
 void HoastProcessor::calculateRotationMatrix(float yaw_rad, float pitch_rad)
 {
     printf("calculateRotationMatrix! \n");
+
+    // save current rotation matrix
+    for (int i = 0; i < rotMtxSize; ++i)
+        *(oldShRotationMatrix + i) = *(shRotationMatrix + i);
+
     float cosYaw = cosf(yaw_rad);
     float cosPitch = cosf(pitch_rad);
     float sinYaw = sinf(yaw_rad);

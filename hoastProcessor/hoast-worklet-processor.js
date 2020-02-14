@@ -94,11 +94,6 @@ class HOASTWorkletProcessor extends AudioWorkletProcessor {
 
         if (this._paramChanged) {
             this._paramChanged = false;
-            // console.log(Number(parameters.azimRad));
-            // console.log(Number(parameters.elevRad));
-            // console.log('calculate rotation matrix');
-            // console.log(parameters.azimRad);
-            // console.log(parameters.elevRad);
             this._kernel.calculateRotationMatrix(Number(parameters.azimRad), Number(parameters.elevRad));
         }
 
@@ -110,7 +105,6 @@ class HOASTWorkletProcessor extends AudioWorkletProcessor {
             this._channelCount);
         for (let channel = 0; channel < this._channelCount; ++channel) {
             output[channel].set(this._heapOutputBuffer.getChannelData(channel));
-            // output[channel].set(this._heapInputBuffer.getChannelData(channel));
         }
 
         return true;
@@ -120,24 +114,6 @@ class HOASTWorkletProcessor extends AudioWorkletProcessor {
         console.log("_calculateChannelCount");
         this._channelCount = (this._order + 1) * (this._order + 1);
     }
-
-    // _hasParameterChanged(params) {
-    //     // console.log("azimRad.length: " + (params.azimRad.length !== 1));
-    //     // console.log("elevRad.length: " + (params.elevRad.length !== 1));
-    //     // console.log("azim: " + (this._oldAzim !== params.azimRad));
-    //     // console.log("elev: " + (this._oldElev !== params.elevRad));
-    //     if (params.azimRad.length !== 1 || params.elevRad.length !== 1) { // todo: will this work?
-    //         //  || this._oldAzim !== params.azimRad || this._oldElev !== params.elevRad) {
-    //         this._oldAzim = params.azimRad;
-    //         this._oldElev = params.elevRad;
-    //         return true;
-    //     }
-    //     else {
-    //         return false;
-    //     }
-    // }
-
 }
-
 
 registerProcessor('hoast-worklet-processor', HOASTWorkletProcessor);

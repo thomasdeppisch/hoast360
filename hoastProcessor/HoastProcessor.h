@@ -31,9 +31,10 @@ private:
     const int numShChannels;
     int rotMtxSize;
     float *shRotationMatrix;
+    float *oldShRotationMatrix;
     float *processingBuffer;
 
-    void matrixMultiply(float *input_ptr, float *output_ptr, float *matrix_ptr, unsigned channel_count);
+    void matrixMultiplyWithFade(float *input_ptr, float *output_ptr, float *matrix_ptr, float *old_matrix_ptr, unsigned channel_count);
     float P(int i, int l, int a, int b, const float *sh_rot_mtx, const int last_order_idx);
     float U(int l, int m, int n, const float *sh_rot_mtx, const int last_order_idx);
     float V(int l, int m, int n, const float *sh_rot_mtx, const int last_order_idx);
