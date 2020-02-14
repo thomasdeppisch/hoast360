@@ -96,9 +96,9 @@ class HOASTWorkletProcessor extends AudioWorkletProcessor {
             this._paramChanged = false;
             // console.log(Number(parameters.azimRad));
             // console.log(Number(parameters.elevRad));
-            console.log('calculate rotation matrix');
-            console.log(parameters.azimRad);
-            console.log(parameters.elevRad);
+            // console.log('calculate rotation matrix');
+            // console.log(parameters.azimRad);
+            // console.log(parameters.elevRad);
             this._kernel.calculateRotationMatrix(Number(parameters.azimRad), Number(parameters.elevRad));
         }
 

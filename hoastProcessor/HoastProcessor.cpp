@@ -40,21 +40,30 @@ void HoastProcessor::Process(uintptr_t input_ptr, uintptr_t output_ptr, unsigned
     float *input_buffer = reinterpret_cast<float *>(input_ptr);
     float *output_buffer = reinterpret_cast<float *>(output_ptr);
 
-    //matrixMultiply(input_buffer, processingBuffer, shRotationMatrix, channel_count);
+    // rotate
+    memcpy(output_buffer, input_buffer, kBytesPerChannel); // do not rotate omni
+    int thisOrderIdx = -1; // start at -1 as we leave out the first order in shRotationMatrix
+    for (int i = 1; i <= order; ++i) {
+        thisOrderIdx += (2 * i - 1) * (2 * i - 1);
+        int channelIdx = i * i * kRenderQuantumFrames;
+        matrixMultiply(input_buffer + channelIdx,
+                       output_buffer + channelIdx,
+                       shRotationMatrix + thisOrderIdx, (2 * i + 1));
+    }
     //matrixMultiply(processingBuffer, output_buffer, zoomMatrix, channel_count);
 
-    for (unsigned channel = 0; channel < channel_count; ++channel)
-    {
-        float *destination = output_buffer + channel * kRenderQuantumFrames;
-        float *source = input_buffer + channel * kRenderQuantumFrames;
-        //int matrixIdx = channel * rotMtxRowColSize + 
-        for (int smp = 0; smp < kRenderQuantumFrames; ++smp)
-        {
-            *(destination + smp) = 0.5f * *(source + smp);
-        }
+    // for (unsigned channel = 0; channel < channel_count; ++channel)
+    // {
+    //     float *destination = output_buffer + channel * kRenderQuantumFrames;
+    //     float *source = input_buffer + channel * kRenderQuantumFrames;
+    //     //int matrixIdx = channel * rotMtxRowColSize + 
+    //     for (int smp = 0; smp < kRenderQuantumFrames; ++smp)
+    //     {
+    //         *(destination + smp) = 0.5f * *(source + smp);
+    //     }
 
-        //memcpy(destination, source, kBytesPerChannel);
-    }
+    //     //memcpy(destination, source, kBytesPerChannel);
+    // }
 }
 
 void HoastProcessor::matrixMultiply(float *input_ptr, float *output_ptr, float *matrix_ptr, unsigned channel_count)
@@ -78,6 +87,7 @@ void HoastProcessor::matrixMultiply(float *input_ptr, float *output_ptr, float *
 
 void HoastProcessor::calculateRotationMatrix(float yaw_rad, float pitch_rad)
 {
+    printf("calculateRotationMatrix! \n");
     float cosYaw = cosf(yaw_rad);
     float cosPitch = cosf(pitch_rad);
     float sinYaw = sinf(yaw_rad);
@@ -99,7 +109,7 @@ void HoastProcessor::calculateRotationMatrix(float yaw_rad, float pitch_rad)
     for (int l = 2; l <= order; ++l)
     {
         lastOrderIdx = thisOrderIdx;
-        thisOrderIdx += (2 * (l - 1) + 1) * (2 * (l - 1) + 1);
+        thisOrderIdx += (2 * l - 1) * (2 * l - 1);
 
         for (int m = -l; m <= l; ++m)
         {
@@ -141,7 +151,7 @@ float HoastProcessor::P(int i, int l, int a, int b, const float *sh_rot_mtx, con
     float rim1 = sh_rot_mtx[iIdx];
     float ri0 = sh_rot_mtx[iIdx + 1];
 
-    int lastOrderRowColIdx = last_order_idx + (2 * (l - 1) + 1) * (a + l - 1);
+    int lastOrderRowColIdx = last_order_idx + (2 * l - 1) * (a + l - 1);
 
     if (b == -l)
         return ri1 * sh_rot_mtx[lastOrderRowColIdx] + rim1 * sh_rot_mtx[lastOrderRowColIdx + (2 * l - 2)];

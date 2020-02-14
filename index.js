@@ -1,4 +1,5 @@
 import 'audioworklet-polyfill';
+import * as ambisonics from 'ambisonics';
 
 "use strict";
 
@@ -11,7 +12,9 @@ var order = 4;
 var chCounts = [], chStrings = [], nrOfAudioPlayers, numChannels;
 setOrderDependentVariables();
 var audioElements = [], sourceNodes = [], channelSplitters = [], channelMerger;
-var soundUrl = './sounds/wavs/25ch_count_';
+var soundUrl = './sounds/wavs/dr0_p60_br-160_pe-90_';
+var decoder;
+var irs = "./irs/mls_o4_rev.wav";
 
 for (let i = 0; i < nrOfAudioPlayers; ++i) {
     audioElements[i] = new Audio();
@@ -26,6 +29,15 @@ for (let i = 0; i < nrOfAudioPlayers; ++i) {
 channelMerger = context.createChannelMerger(numChannels);
 console.log(channelMerger);
 connectChannels();
+
+decoder = new ambisonics.binDecoder(context, order);
+console.log(decoder);
+
+var loader_filters = new ambisonics.HOAloader(context, order, irs, buffer => {
+    decoder.updateFilters(buffer);
+});
+loader_filters.load();
+
 
 // Loads module script via AudioWorklet.
 context.audioWorklet.addModule('./hoastProcessor/hoast-processor.wasmmodule.js').then(() => {
@@ -46,11 +58,23 @@ context.audioWorklet.addModule('./hoastProcessor/hoast-processor.wasmmodule.js')
 
     const paramAzimRad = hoastWorkletNode.parameters.get('azimRad');
     const paramElevRad = hoastWorkletNode.parameters.get('elevRad');
-    paramAzimRad.value = 20 * Math.PI / 180;
-    paramElevRad.value = 10 * Math.PI / 180;
-    hoastWorkletNode.port.postMessage('paramChange');
+    // paramAzimRad.value = 20 * Math.PI / 180;
+    // paramElevRad.value = 10 * Math.PI / 180;
+    // hoastWorkletNode.port.postMessage('paramChange');
 
-    channelMerger.connect(hoastWorkletNode).connect(context.destination);
+    channelMerger.connect(hoastWorkletNode).connect(decoder.in);
+    decoder.out.connect(context.destination);
+
+    $("#azim").on('input', function () {
+        // console.log($(this)[0].value);
+        paramAzimRad.value = $(this)[0].value * Math.PI / 180;
+        hoastWorkletNode.port.postMessage('paramChange');
+    });
+    $("#elev").on('input', function () {
+        // console.log($(this)[0].value);
+        paramElevRad.value = $(this)[0].value * Math.PI / 180;
+        hoastWorkletNode.port.postMessage('paramChange');
+    });
 
 });
 
