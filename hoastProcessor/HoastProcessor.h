@@ -29,13 +29,15 @@ private:
 
     const int order;
     const int numShChannels;
-    const int rotMtxRowColSize;
+    int rotMtxSize;
     float *shRotationMatrix;
+    float *processingBuffer;
 
-    float P(int i, int l, int a, int b, const float *shRotationMatrix);
-    float U(int l, int m, int n, const float *shRotationMatrix);
-    float V(int l, int m, int n, const float *shRotationMatrix);
-    float W(int l, int m, int n, const float *shRotationMatrix);
+    void matrixMultiply(float *input_ptr, float *output_ptr, float *matrix_ptr, unsigned channel_count);
+    float P(int i, int l, int a, int b, const float *sh_rot_mtx, const int last_order_idx);
+    float U(int l, int m, int n, const float *sh_rot_mtx, const int last_order_idx);
+    float V(int l, int m, int n, const float *sh_rot_mtx, const int last_order_idx);
+    float W(int l, int m, int n, const float *sh_rot_mtx, const int last_order_idx);
 };
 
 EMSCRIPTEN_BINDINGS(CLASS_HoastProcessor)
