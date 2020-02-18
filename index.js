@@ -65,17 +65,18 @@ context.audioWorklet.addModule('./hoastProcessor/hoast-processor.wasmmodule.js')
     channelMerger.connect(hoastWorkletNode).connect(decoder.in);
     decoder.out.connect(context.destination);
 
+    var sendParamChange = throttle(function(){hoastWorkletNode.port.postMessage('paramChange');}, 100);
+
     $("#azim").on('input', function () {
         // console.log($(this)[0].value);
         paramAzimRad.value = $(this)[0].value * Math.PI / 180;
-        hoastWorkletNode.port.postMessage('paramChange');
+        sendParamChange();
     });
     $("#elev").on('input', function () {
         // console.log($(this)[0].value);
         paramElevRad.value = $(this)[0].value * Math.PI / 180;
-        hoastWorkletNode.port.postMessage('paramChange');
+        sendParamChange();
     });
-
 });
 
 $("#clickme").on("click", function () {
@@ -170,5 +171,17 @@ function connectChannels() {
             ++totalChannelCount;
         }
     }
+}
 
+function throttle(callback, limit) {
+  var wait = false;
+  return function () {
+    if (!wait) {
+      callback.call();
+      wait = true;
+      setTimeout(function () {
+          wait = false;
+      }, limit);
+    }
+  }
 }

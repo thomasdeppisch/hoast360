@@ -53,7 +53,7 @@ void HoastProcessor::Process(uintptr_t input_ptr, uintptr_t output_ptr, unsigned
     for (int i = 1; i <= order; ++i) {
         thisOrderIdx += (2 * i - 1) * (2 * i - 1);
         int channelIdx = i * i * kRenderQuantumFrames;
-        matrixMultiplyWithFade(input_buffer + channelIdx,
+        matrixMultiply (input_buffer + channelIdx,
                        output_buffer + channelIdx,
                        shRotationMatrix + thisOrderIdx, 
                        oldShRotationMatrix + thisOrderIdx,
@@ -73,6 +73,25 @@ void HoastProcessor::Process(uintptr_t input_ptr, uintptr_t output_ptr, unsigned
 
     //     //memcpy(destination, source, kBytesPerChannel);
     // }
+}
+
+void HoastProcessor::matrixMultiply(float *input_ptr, float *output_ptr, float *matrix_ptr, float *old_matrix_ptr, unsigned channel_count)
+{
+    // matrix multiplication: output = matrix * input
+    // expects matrix to be (channel_count x channel_count), input and output to be (channel_count x kRenderQuantumFrames)
+    for (unsigned out_channel = 0; out_channel < channel_count; ++out_channel) {
+        float *destination_channel = output_ptr + out_channel * kRenderQuantumFrames;
+        float *matrix_row = matrix_ptr + out_channel * channel_count; // only valid for quadratic matrix!
+        float *old_matrix_row = old_matrix_ptr + out_channel * channel_count;
+
+        for (unsigned j = 0; j < kRenderQuantumFrames; ++j) {
+            float *destination_smp = destination_channel + j;
+            *(destination_smp) = 0.0f;
+            for (unsigned k = 0; k < channel_count; ++k) {
+                *(destination_smp) += *(matrix_row + k) * *(input_ptr + (k * kRenderQuantumFrames) + j);
+            }
+        }
+    }   
 }
 
 void HoastProcessor::matrixMultiplyWithFade(float *input_ptr, float *output_ptr, float *matrix_ptr, float *old_matrix_ptr, unsigned channel_count)
