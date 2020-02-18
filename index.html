@@ -6,16 +6,12 @@
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
   </head>
   <body>
-    <!-- <script src="https://unpkg.com/audioworklet-polyfill/dist/audioworklet-polyfill.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script> -->
-    <!-- <script src="./dependencies/jquery.min.js"></script> -->
-    <!-- <script src="https://unpkg.com/audioworklet-polyfill/dist/audioworklet-polyfill.js"></script> -->
-    <!-- <script src="./dependencies/audioworklet-polyfill.js"></script> -->
-
+    <script src="https://unpkg.com/audioworklet-polyfill/dist/audioworklet-polyfill.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <button id="clickme">clickme</button>
-    <input type="range" min="-180" max="180" value="0" class="slider" id="azim">
-    <input type="range" min="-90" max="90" value="0" class="slider" id="elev">
+    <input type="range" min="0" max="1" value="0.5" step="0.01" class="slider" id="slGain">
 
-    <script src="./dist/bundle.js" type="module"></script>
+    <script src="index.js"></script>
+
   </body>
 </html>

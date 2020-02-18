@@ -1,37 +1,17 @@
 {
-  "name": "hoast-player",
+  "name": "audioworklets",
   "version": "1.0.0",
-  "description": "360 degree video player with dynamic binaural higher-order ambisonics rendering, depending on view direction and zoom factor.",
+  "description": "",
   "main": "index.js",
   "directories": {
     "lib": "lib"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build-web": "webpack -p",
-    "build-web-dbg": "webpack -d",
-    "build-wasm-dbg": "em++ --bind -O1 -s WASM=1 -s BINARYEN_ASYNC_COMPILATION=0 -s SINGLE_FILE=1 ./HoastProcessor/HoastProcessor.cpp -o ./HoastProcessor/hoast-processor.wasmmodule.js --post-js ./lib/wasm-audio-helper.js --post-js ./HoastProcessor/hoast-worklet-processor.js",
-    "build-wasm": "em++ --bind -O3 -s WASM=1 -s BINARYEN_ASYNC_COMPILATION=0 -s SINGLE_FILE=1 ./HoastProcessor/HoastProcessor.cpp -o ./HoastProcessor/hoast-processor.wasmmodule.js --post-js ./lib/wasm-audio-helper.js --post-js ./HoastProcessor/hoast-worklet-processor.js",
-    "wasm-vec": "em++ --bind -O2 -msimd128 -Rpass=loop-vectorize -Rpass-missed=loop-vectorize -Rpass-analysis=loop-vectorize -s WASM=1 -s BINARYEN_ASYNC_COMPILATION=0 -s SINGLE_FILE=1 ./HoastProcessor/HoastProcessor.cpp -o ./HoastProcessor/hoast-processor.wasmmodule.js --post-js ./lib/wasm-audio-helper.js --post-js ./HoastProcessor/hoast-worklet-processor.js",
-    "build-all": "npm run build-wasm && npm run build-web",
-    "build-all-dbg": "npm run build-wasm-dbg && npm run build-web-dbg",
+    "build-wasm-dbg": "em++ --bind -O1 -s WASM=1 -s BINARYEN_ASYNC_COMPILATION=0 -s SINGLE_FILE=1 ./GainProcessor.cpp -o ./gain-processor.wasmmodule.js --post-js ./lib/wasm-audio-helper.js --post-js ./lib/em-es6-module.js",
+    "build": "npm run build-wasm-dbg",
     "server": "http-server -S -C cert.pem -o"
   },
-  "repository": {
-    "type": "git",
-    "url": "git@git.iem.at:hoast/hoast-player.git"
-  },
   "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "@babel/core": "^7.8.3",
-    "@babel/preset-env": "^7.8.3",
-    "babel-loader": "^8.0.6",
-    "webpack": "^4.41.5",
-    "webpack-cli": "^3.3.10"
-  },
-  "dependencies": {
-    "audioworklet-polyfill": "^1.1.2",
-    "jquery": "^3.4.1"
-  }
+  "license": "ISC"
 }
