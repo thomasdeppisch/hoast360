@@ -68,7 +68,7 @@ export function initialize(newMediaUrl, newOrder) {
 	mediaUrl = newMediaUrl;
 	setOrderDependentVariables();
 
-	videoPlayer.src({type: 'application/dash+xml', src: mediaUrl + '/video.mpd'});
+	videoPlayer.src({type: 'application/dash+xml', src: mediaUrl + '/dash_video/video.mpd'});
 	// videoPlayer = videojs('videojs-player', {
 	// 	sources: [{
 	//     src: mediaUrl + '/video.mpd',
@@ -77,10 +77,11 @@ export function initialize(newMediaUrl, newOrder) {
 	// 	html5: {
 	//     nativeCaptions: false // get rid of weird safari error...
 	//   }
-	// });
+    // });
+    console.log("active audio player: " + nrActiveAudioPlayers);
 
 	for (let i = 0; i < nrActiveAudioPlayers; ++i) {
-    audioPlayers[i].attachSource(mediaUrl + "audio_" + chStrings[i] + ".mpd");
+      audioPlayers[i].attachSource(mediaUrl + "dash_audio" + String(i+1) + "/audio_" + chStrings[i] + ".mpd");
 	  // console.log(audioPlayers[i]);
 	  // console.log(audioPlayers[i].getVideoElement().readyState);
 	}
@@ -430,7 +431,7 @@ function setOrderDependentVariables() {
 	  case 3:
 			chCounts = [8, 8];
 			chStrings = ["01-08ch", "09-16ch"];
-			nrActiveAudioPlayers = 3;
+			nrActiveAudioPlayers = 2;
 	    break;
 		case 2:
 			chCounts = [8, 1];
