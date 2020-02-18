@@ -4253,7 +4253,8 @@ class HOASTWorkletProcessor extends AudioWorkletProcessor {
 
         if (this._paramChanged) {
             this._paramChanged = false;
-            this._kernel.calculateRotationMatrix(Number(parameters.azimRad), Number(parameters.elevRad));
+            if (!isNaN(Number(parameters.azimRad)) && !isNaN(Number(parameters.elevRad)))
+                this._kernel.calculateRotationMatrix(Number(parameters.azimRad), Number(parameters.elevRad));
         }
 
         for (let channel = 0; channel < this._channelCount; ++channel) {
