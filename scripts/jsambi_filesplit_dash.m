@@ -1,21 +1,16 @@
-% split HOA audio file to multiple 8 channel files with 7 audio channels
-% and one silent channel to be streamed via MPEG DASH using m4a container
-% with AAC 7.1 profile -> LFE channel is silent
-% (7.1 profile is the largest multichannel profile which is supported among
-% many applications but the profile automatically applies a lowpass filter
-% to the LFE channel)
-
-% this time the fourth channel (=LFE) is supposed to be empty
+% split HOA audio file to multiple files, include silent channel depending
+% on options
 
 clear all
 
 path = '../sounds/wavs/';
-filename = 'trelotechnika_ambix.wav';
-order = 3;
+filename = '2015_VokalTotal.wav';
+order = 4;
 [sig,fs] = audioread([path,filename]);
 
-nonSilentChannels = 7;
+nonSilentChannels = 8;
 nChPerFile = 8;
+nSilentChannelsPerFile = nChPerFile - nonSilentChannels;
 nCh = (order + 1)^2;
 nFiles = ceil(nCh./nonSilentChannels);
 nSmp = size(sig,1);
@@ -40,7 +35,7 @@ for ii=1:nFiles
     
     if (ii ~= nFiles)
         sigPart = [sig(:,str2double(nStart):str2double(nStart)+2), ...
-            zeros(nSmp, 1), sig(:,str2double(nStart)+3:str2double(nEnd))];
+            zeros(nSmp, nSilentChannelsPerFile), sig(:,str2double(nStart)+3:str2double(nEnd))];
     else
         sigPart = sig(:,str2double(nStart):str2double(nEnd));
     end
