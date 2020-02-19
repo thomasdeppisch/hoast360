@@ -26,7 +26,7 @@ var order,
     wasPaused = true,
     waitingForPlayback = false,
     context, order, channelMerger, rotator, multiplier, decoder,
-    viewAzim, viewElev, masterGain, numCh;
+    viewAzim, viewElev, masterGain, numCh, videoPlayer;
 
 var maxOrder = 4;
 var tracksPerAudioPlayer = 8;
@@ -52,12 +52,14 @@ for (let i = 0; i < maxNrOfAudioPlayers; ++i) {
     sourceNodes[i].connect(channelSplitters[i]);
 }
 
-var videoPlayer = videojs('videojs-player');
-videoPlayer.vr({ projection: '360' });
-console.log(videoPlayer);
-console.log(videoPlayer.vr());
-
 export function initialize(newMediaUrl, newOrder) {
+    let playerhtml = "<video-js id='videojs-player' class='video-js vjs-big-play-centered' controls preload='auto' width='800' height='400' crossorigin='anonymous' data-setup='{}'></video-js>";
+    $('#playerdiv').append(playerhtml);
+    videoPlayer = videojs('videojs-player');
+    videoPlayer.vr({ projection: '360' });
+    console.log(videoPlayer);
+    console.log(videoPlayer.vr());
+
     wasPaused = true;
     waitingForPlayback = false;
     audioSetupComplete = false;
@@ -95,6 +97,7 @@ export function stop() {
     console.log("stopping");
     videoPlayer.pause();
     disconnectAudio();
+    videoPlayer.dispose();
 }
 
 function disconnectAudio() {
