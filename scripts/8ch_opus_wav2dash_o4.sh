@@ -14,6 +14,7 @@ ffmpeg -i '../videos/'$vidfn -c:v libvpx-vp9 -s 720x360 -b:v 750k -keyint_min 15
 ffmpeg -i '../videos/'$vidfn -c:v libvpx-vp9 -s 720x360 -b:v 1000k -keyint_min 150 -g 150 -tile-columns 4 -frame-parallel 1 -an -f webm -dash 1 $outdir'/'$fn'_720_1000k.webm'
 ffmpeg -i '../videos/'$vidfn -c:v libvpx-vp9 -s 1080x540 -b:v 1500k -keyint_min 150 -g 150 -tile-columns 4 -frame-parallel 1 -an -f webm -dash 1 $outdir'/'$fn'_1080_1500k.webm'
 ffmpeg -i '../videos/'$vidfn -c:v libvpx-vp9 -s 1440x720 -b:v 2000k -keyint_min 150 -g 150 -tile-columns 4 -frame-parallel 1 -an -f webm -dash 1 $outdir'/'$fn'_1440_2000k.webm'
+ffmpeg -i '../videos/'$vidfn -c:v libvpx-vp9 -s 2560x1280 -b:v 2500k -keyint_min 150 -g 150 -tile-columns 4 -frame-parallel 1 -an -f webm -dash 1 $outdir'/'$fn'_2560_2500k.webm'
 ffmpeg -i '../videos/'$vidfn -c:v libvpx-vp9 -s 3840x1920 -b:v 3000k -keyint_min 150 -g 150 -tile-columns 4 -frame-parallel 1 -an -f webm -dash 1 $outdir'/'$fn'_3840_3000k.webm'
 
 ############################# non-live, without chunks #############################
