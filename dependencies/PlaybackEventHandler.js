@@ -1,4 +1,5 @@
 // synchronize playback of several mediaElements
+import * as dashjs from 'dashjs';
 
 export default class PlaybackEventHandler {
 
@@ -48,7 +49,7 @@ export default class PlaybackEventHandler {
             this.audioPlayers[i].on(dashjs.MediaPlayer.events["PLAYBACK_SEEKING"], this.onAudioPlaybackSeeking, this);
         }
 
-        this.videoPlayer.on("canplay", function (event) {
+        this.videoPlayer.on("canplay", function () {
             self.checkReadyStates();
         });
 
@@ -188,4 +189,4 @@ export default class PlaybackEventHandler {
         this.checkReadyStates();
     }
 
-  };
+  }

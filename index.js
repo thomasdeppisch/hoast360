@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import 'dashjs';
+import * as dashjs from 'dashjs';
 import videojs from 'video.js';
 import 'videojs-contrib-dash'
 import './dependencies/videojs-vr.min.js';
@@ -23,9 +23,7 @@ var order,
     channelSplitters = [],
     audioSetupComplete = false,
     videoSetupComplete = false,
-    wasPaused = true,
-    waitingForPlayback = false,
-    context, order, channelMerger, rotator, multiplier, decoder,
+    context, channelMerger, rotator, multiplier, decoder,
     viewAzim, viewElev, masterGain, numCh, videoPlayer, playbackEventHandler;
 
 var maxOrder = 4;
@@ -62,8 +60,6 @@ export function initialize(newMediaUrl, newOrder) {
     console.log(videoPlayer);
     console.log(videoPlayer.vr());
 
-    wasPaused = true;
-    waitingForPlayback = false;
     audioSetupComplete = false;
     videoSetupComplete = false;
 
@@ -239,6 +235,7 @@ function setOrderDependentVariables() {
             chCounts = [4];
             chStrings = ["01-04ch"];
             numActiveAudioPlayers = 1;
+            break;
         default:
             console.error("Error: Unsupported ambisonics order, choose order between 1 and 4.");
     }
