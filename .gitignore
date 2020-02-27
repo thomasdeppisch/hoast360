@@ -10,3 +10,4 @@ node_modules/*
 *.opus
 *.mpd
 *.m4v
+webm_media/
