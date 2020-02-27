@@ -19,7 +19,7 @@ export default class PlaybackEventHandler {
         this.registerEvents();
         console.log('numActiveAudioPlayer: ' + this.numActiveAudioPlayers);
     }
-  
+
     registerEvents() {
         let self = this;
         this.videoPlayer.bigPlayButton.off('click');
@@ -49,60 +49,53 @@ export default class PlaybackEventHandler {
         }
 
         this.videoPlayer.on("canplay", function (event) {
-            console.log("video canplay");
             self.checkReadyStates();
         });
-    
+
         this.videoPlayer.on("play", function () {
-            console.log("play");
             if (self.context.state !== "running") {
                 self.context.resume();
                 console.log("resuming context");
             }
-    
+
             for (let i = 0; i < self.numActiveAudioPlayers; ++i) {
                 self.audioPlayers[i].play();
             }
         });
-    
+
         this.videoPlayer.on("pause", function () {
-            console.log("pause");
             for (let i = 0; i < self.numActiveAudioPlayers; ++i) {
                 self.audioPlayers[i].pause();
             }
         });
-    
+
         this.videoPlayer.on("seeking", function () {
-            console.log("seeking!");
             self.startWaitingRoutine();
         });
 
         this.videoPlayer.on("seeked", function() {
-            console.log("seeked");
             for (let i = 0; i < self.numActiveAudioPlayers; ++i) {
                 self.audioPlayers[i].seek(this.currentTime());
             }
         })
-    
+
         this.videoPlayer.on("waiting", function () {
-            console.log("waiting");
             self.startWaitingRoutine();
         });
-    
+
         // this.videoPlayer.on("playing", function () {
         //     console.log("playing");
         //     //wasPaused = false;
         //     this.waitingForPlayback = false;
         //     //videoPlayer.removeClass("vjs-seeking"); // remove loading spinner
         // });
-    
+
         // this.videoPlayer.on("loadeddata", function () {
         //     console.log("loaded video data");
         // });
     }
 
     unregisterEvents() {
-        console.log('unregistering');
         var canvControls = this.videoPlayer.vr().canvasPlayerControls;
         canvControls.removeEventListener('vrtoggleplay');
         this.videoPlayer.controlBar.playToggle.off('click');
@@ -126,17 +119,14 @@ export default class PlaybackEventHandler {
     }
 
     onAudioCanPlay() {
-        console.log("audio canplay");
         this.checkReadyStates();
     }
 
     onAudioPlaybackWaiting() {
-        console.log("audio waiting");
         this.startWaitingRoutine();
     }
 
     onAudioPlaybackSeeking () {
-        console.log("audio seeking");
         this.startWaitingRoutine();
     }
 
@@ -154,41 +144,38 @@ export default class PlaybackEventHandler {
 
     togglePlay() {
         if (this.wasPlaying) {
-            console.log('pausing');
             this.videoPlayer.pause();
             this.wasPlaying = false;
         }
         else {
-            console.log('trying to start playback');
             this.tryToStartPlayback();
         }
     }
 
     checkReadyStates() {
         if (this.readyForPlayback()) {
-            console.log('ready!');
             this.videoPlayer.removeClass("vjs-seeking");
             if (this.wasPlaying) {
                 this.tryToStartPlayback();
-            }                
+            }
             else {
                 this.videoPlayer.bigPlayButton.show();
             }
         }
     }
-    
+
     //resume playback if audio and video is ready
     tryToStartPlayback() {
         if (this.readyForPlayback()) {
             this.wasPlaying = true;
             this.waitingForPlayback = false;
             this.videoPlayer.play();
-        }      
+        }
     }
-    
+
     readyForPlayback() {
         if (this.videoPlayer.readyState() >= 3
-            && this.audioPlayers.every(p => (p.getVideoElement().readyState === 4) || (p.getVideoElement().readyState === 0)) // either playback ready or no source set
+            && this.audioPlayers.every(p => (p.getVideoElement().readyState >= 3) || (p.getVideoElement().readyState === 0)) // either playback ready or no source set
             && this.allBuffersLoaded)
             return true;
         else
@@ -198,6 +185,7 @@ export default class PlaybackEventHandler {
     setAllBuffersLoaded(isLoaded) {
         console.log('all buffers loaded');
         this.allBuffersLoaded = isLoaded;
+        this.checkReadyStates();
     }
 
   };
