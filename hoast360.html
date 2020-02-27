@@ -1,51 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<title>HOAST360</title>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<link rel="shortcut icon" type="image/jpg" href="img/favicon.jpg"/>
-		<link href="https://fonts.googleapis.com/css?family=Poiret+One" rel="stylesheet">
-	  <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
-		<!-- <link href="https://vjs.zencdn.net/7.6.0/video-js.css" rel="stylesheet"> -->
-		<link rel="stylesheet" type="text/css" href="./css/hoast.css">
 
-    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha256-pasqAKBDmFT4eHoN2ndd6lN370kFiGUFyTiUHWhU7k8=" crossorigin="anonymous"></script>
-	</head>
-	<body>
+<head>
+    <title>HOAST360</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link rel="shortcut icon" type="image/jpg" href="img/favicon.jpg" />
+    <link href="https://fonts.googleapis.com/css?family=Poiret+One" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+    <!-- <link href="https://vjs.zencdn.net/7.6.0/video-js.css" rel="stylesheet"> -->
+    <link rel="stylesheet" type="text/css" href="./css/hoast.css">
 
-		<div id="overlay">
-			<div id="topfill"></div>
-			<div id="headers">
-				<h1><span id="h1">HOAST360</span></h1>
-				<p id="hoast-text">Higher Order Ambisonics Spatial Transform <br> 360 Degree Video Player</p>
-				<button id="git" onclick="location.href='https://github.com/thomasdeppisch/hoast360'"><img src="img/git.png" alt="git" id="git-img"></button>
-			</div>
-		</div>
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+        integrity="sha256-pasqAKBDmFT4eHoN2ndd6lN370kFiGUFyTiUHWhU7k8=" crossorigin="anonymous"></script>
+</head>
 
-		<video-js id='videojs-player' class='video-js vjs-big-play-centered' controls preload='auto' width='800' height='400' crossorigin="anonymous" data-setup='{}'>
-		  <p class='vjs-no-js'>
-		    To view this video please enable JavaScript, and consider upgrading to a web browser that
-		    <a href='https://videojs.com/html5-video-support/' target='_blank'>supports HTML5 video</a>
-		  </p>
-		</video-js>
+<body>
+
+    <div id="overlay">
+        <div id="topfill"></div>
+        <div id="headers">
+            <h1><span id="h1">HOAST360</span></h1>
+            <p id="hoast-text">Higher Order Ambisonics Spatial Transform <br> 360 Degree Video Player</p>
+            <button id="git" onclick="location.href='https://github.com/thomasdeppisch/hoast360'"><img src="img/git.png"
+                    alt="git" id="git-img"></button>
+        </div>
+    </div>
+
+    <div id="playerdiv"></div>
+
     <button id="start1">start1</button>
     <button id="start2">start2</button>
     <button id="stop">stop</button>
 
     <script src="./dist/hoast360.bundle.js"></script>
-		<script>
-      $("#start1").click(function() {
-        hoast360.initialize("webm_media/2015_VokalTotal", 4);
-      });
-      $("#start2").click(function() {
-        hoast360.initialize("webm_media/hoast_demo", 4);
-      });
-      $("#stop").click(function() {
-        hoast360.stop();
-      })
-
-		</script>
-
-	</body>
+    <script>
+        $("#start1").click(function () {
+            hoast360.initialize("webm_media/2015_VokalTotal", 4);
+        });
+        $("#start2").click(function () {
+            hoast360.initialize("webm_media/hoast_demo", 4);
+        });
+        $("#stop").click(function () {
+            hoast360.stop();
+        })
+    </script>
+</body>
 </html>

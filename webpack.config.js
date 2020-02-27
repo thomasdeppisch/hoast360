@@ -1,31 +1,48 @@
 var webpack = require('webpack');
+var BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
-module.exports = {
-  entry: './index.js',
-  output: {
-    filename: 'hoast360.bundle.js',
-    library: 'hoast360',
-    libraryTarget: 'var' // import via <script>
-  },
-  module: {
-    rules: [
-      {
-        test: /\.m?js$/,
-        exclude: /(node_modules|bower_components)/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/preset-env']
-          }
-        }
-      },
-      {
-        test: /\.css$/i,
-        use: [ 'style-loader', 'css-loader' ]
-      }
+const config = {
+    entry: './index.js',
+    output: {
+        filename: 'hoast360.bundle.js',
+        library: 'hoast360',
+        libraryTarget: 'var' // import via <script>
+    },
+    module: {
+        rules: [
+            {
+                enforce: 'pre',
+                test: /\.js$/,
+                exclude: /node_modules|dependencies\/videojs-vr.min.js/,
+                loader: 'eslint-loader',
+            },
+            {
+                test: /\.m?js$/,
+                exclude: /(node_modules|bower_components)/,
+                use: {
+                    loader: 'babel-loader',
+                    options: {
+                        presets: ['@babel/preset-env']
+                    }
+                }
+            },
+            {
+                test: /\.css$/i,
+                use: ['style-loader', 'css-loader']
+            }
+        ]
+    },
+    resolve: {
+        extensions: ['*', '.js'],
+    },
+    plugins: [
     ]
-  },
-  resolve: {
-    extensions: ['*', '.js'],
-  }
 };
+
+module.exports = env => {
+    const inProduction = env.production;
+    if (inProduction)
+        config.plugins.push(new BundleAnalyzerPlugin({ analyzerPort: 8123 }));
+
+    return config;
+}

@@ -1,11 +1,12 @@
 import $ from 'jquery';
-import 'dashjs';
+import * as dashjs from 'dashjs';
 import videojs from 'video.js';
 import 'videojs-contrib-dash'
 import './dependencies/videojs-vr.min.js';
-import * as ambisonics from 'ambisonics';
+import {sceneRotator, binDecoder, HOAloader} from 'ambisonics';
 import MatrixMultiplier from './dependencies/MatrixMultiplier.js';
 import { zoom, zoomfactors } from './dependencies/zoom.js';
+import PlaybackEventHandler from './dependencies/PlaybackEventHandler.js';
 import './css/video-js.css';
 
 "use strict";
@@ -13,20 +14,17 @@ import './css/video-js.css';
 var order,
     chCounts,
     chStrings,
-    nrActiveAudioPlayers,
+    numActiveAudioPlayers,
     irs = "staticfiles/mediadb/irs/mls_o4_rev.wav",
     mediaUrl,
     audioElements = [],
     audioPlayers = [],
     sourceNodes = [],
     channelSplitters = [],
-    allBuffersLoaded = false,
     audioSetupComplete = false,
     videoSetupComplete = false,
-    wasPaused = true,
-    waitingForPlayback = false,
-    context, order, channelMerger, rotator, multiplier, decoder,
-    viewAzim, viewElev, masterGain, numCh;
+    context, channelMerger, rotator, multiplier, decoder,
+    viewAzim, viewElev, masterGain, numCh, videoPlayer, playbackEventHandler;
 
 var maxOrder = 4;
 var tracksPerAudioPlayer = 8;
@@ -37,6 +35,8 @@ var AudioContext = window.AudioContext // Default
     || window.webkitAudioContext; // safari
 context = new AudioContext;
 console.log(context);
+
+playbackEventHandler = new PlaybackEventHandler(context);
 
 // create as many audio players as we need for max order
 for (let i = 0; i < maxNrOfAudioPlayers; ++i) {
@@ -52,53 +52,48 @@ for (let i = 0; i < maxNrOfAudioPlayers; ++i) {
     sourceNodes[i].connect(channelSplitters[i]);
 }
 
-var videoPlayer = videojs('videojs-player');
-videoPlayer.vr({ projection: '360' });
-console.log(videoPlayer);
-console.log(videoPlayer.vr());
-
 export function initialize(newMediaUrl, newOrder) {
-    wasPaused = true;
-    waitingForPlayback = false;
+    let playerhtml = "<video-js id='videojs-player' class='video-js vjs-big-play-centered' controls preload='auto' crossorigin='anonymous' data-setup='{}'></video-js>";
+    $('#playerdiv').append(playerhtml);
+    videoPlayer = videojs('videojs-player');
+    videoPlayer.vr({ projection: '360' });
+    console.log(videoPlayer);
+    console.log(videoPlayer.vr());
+
     audioSetupComplete = false;
     videoSetupComplete = false;
 
     order = newOrder;
     mediaUrl = newMediaUrl;
     setOrderDependentVariables();
+    console.log('numActiveAudioPlayer: ' + numActiveAudioPlayers);
 
     videoPlayer.src({ type: 'application/dash+xml', src: mediaUrl + '/video.mpd' });
 
-    for (let i = 0; i < nrActiveAudioPlayers; ++i) {
+    for (let i = 0; i < numActiveAudioPlayers; ++i) {
         audioPlayers[i].attachSource(mediaUrl + "/audio_" + chStrings[i] + ".mpd");
         // console.log(audioPlayers[i]);
         // console.log(audioPlayers[i].getVideoElement().readyState);
     }
 
-    videoPlayer.ready(function () {
-        console.log("video player ready");
-
-        // prevent play before everything is set up correctly
-        var tech = videoPlayer.tech({ IWillNotUseThisInPlugins: true });
-        tech.off("mouseup");
-        videoPlayer.bigPlayButton.off("click");
-    });
-
     videoPlayer.vr().on("initialized", function () {
         console.log("vr initialized");
         startSetup();
-        handleEvents();
+        console.log(this);
+        playbackEventHandler.initialize(videoPlayer, audioPlayers, numActiveAudioPlayers);
     });
 }
 
 export function stop() {
     console.log("stopping");
+    playbackEventHandler.unregisterEvents();
     videoPlayer.pause();
     disconnectAudio();
+    videoPlayer.dispose();
 }
 
 function disconnectAudio() {
-    for (let i = 0; i < nrActiveAudioPlayers; ++i) {
+    for (let i = 0; i < numActiveAudioPlayers; ++i) {
         channelSplitters[i].disconnect();
     }
     channelMerger.disconnect();
@@ -106,165 +101,6 @@ function disconnectAudio() {
     multiplier.out.disconnect();
     decoder.out.disconnect();
     masterGain.disconnect();
-}
-
-function handleEvents() {
-    // first we need to get control over playback
-    console.log(videoPlayer.vr().canvasPlayerControls);
-    var canvControls = videoPlayer.vr().canvasPlayerControls;
-    canvControls.canvas.removeEventListener('mouseup', canvControls.onMoveEnd);
-
-    canvControls.canvas.addEventListener("mouseup", function () {
-        console.log("canvas mouseup");
-        // play if everything ready, pause if playing
-        if (readyForPlayback() || !videoPlayer.paused()) {
-            canvControls.onMoveEnd();
-        }
-        else if (!readyForPlayback()) {
-            console.log("not yet ready for playback");
-            waitingForPlayback = true;
-            videoPlayer.addClass("vjs-seeking"); // show loading spinner
-            videoPlayer.bigPlayButton.hide();
-            wasPaused = false;
-            tryResumePlayback();
-        }
-    })
-
-    videoPlayer.bigPlayButton.on("click", function () {
-        if (!readyForPlayback()) {
-            console.log("not yet ready for playback");
-            waitingForPlayback = true;
-            videoPlayer.addClass("vjs-seeking"); // show loading spinner
-        }
-        this.hide();
-        wasPaused = false;
-        tryResumePlayback();
-    });
-
-    // now make sure that audio and video always starts in sync and waits for each other when loading
-    for (let i = 0; i < nrActiveAudioPlayers; ++i) {
-        audioPlayers[i].on(dashjs.MediaPlayer.events["CAN_PLAY"], function () {
-            console.log("audio canplay");
-            tryResumePlayback();
-        });
-
-        audioPlayers[i].on(dashjs.MediaPlayer.events["BUFFER_LOADED"], function () {
-            console.log("audio buffer loaded");
-            if (waitingForPlayback)
-                tryResumePlayback();
-        });
-
-        audioPlayers[i].on(dashjs.MediaPlayer.events["PLAYBACK_WAITING"], function () {
-            console.log("audio waiting");
-            startWaitingRoutine();
-        });
-
-        audioPlayers[i].on(dashjs.MediaPlayer.events["PLAYBACK_SEEKING"], function () {
-            console.log("audio seeking");
-            startWaitingRoutine();
-        });
-    }
-
-    videoPlayer.on("play", function () {
-        console.log("play");
-
-        for (let i = 0; i < nrActiveAudioPlayers; ++i) {
-            audioPlayers[i].play();
-        }
-    });
-
-    // resume context only on first play event
-    videoPlayer.one("play", function () {
-        if (context.state !== "running") {
-            context.resume();
-            console.log("resuming context");
-        }
-    });
-
-    videoPlayer.on("pause", function () {
-        console.log("pause");
-        for (let i = 0; i < nrActiveAudioPlayers; ++i) {
-            audioPlayers[i].pause();
-        }
-    });
-
-    videoPlayer.on("seeking", function () {
-        console.log("seeking!");
-        startWaitingRoutine();
-
-        for (let i = 0; i < nrActiveAudioPlayers; ++i) {
-            audioPlayers[i].seek(this.currentTime());
-        }
-    });
-
-    videoPlayer.on("waiting", function () {
-        console.log("waiting");
-        startWaitingRoutine();
-    });
-
-    videoPlayer.on("canplay", function (event) {
-        console.log("video canplay");
-        tryResumePlayback();
-    });
-
-    videoPlayer.on("volumechange", function () {
-        if (masterGain)
-            masterGain.gain.value = this.volume();
-    });
-
-    videoPlayer.on("playing", function () {
-        console.log("playing");
-        wasPaused = false;
-        waitingForPlayback = false;
-        videoPlayer.removeClass("vjs-seeking"); // remove loading spinner
-    });
-
-    videoPlayer.on("loadeddata", function () {
-        console.log("loaded video data");
-    });
-}
-
-function startWaitingRoutine() {
-    if (!waitingForPlayback) {
-        waitingForPlayback = true;
-        wasPaused = videoPlayer.paused();
-        videoPlayer.pause();
-        videoPlayer.addClass("vjs-seeking"); // show loading spinner
-    }
-}
-
-//resume playback if audio and video is ready
-function tryResumePlayback() {
-    // console.log(videoPlayer.paused());
-    // console.log("wasPaused:"+wasPaused);
-    // console.log("videoPlayer.paused(): "+videoPlayer.paused());
-    // console.log("videoPlayer.readyState(): "+videoPlayer.readyState());
-    // console.log("audio all ready states:"+audioPlayers.every(p => p.getVideoElement().readyState === 4));
-    if (readyForPlayback() && !wasPaused && videoPlayer.paused()) {
-        console.log("resuming playback");
-        videoPlayer.play();
-    } else if (!readyForPlayback() && !wasPaused) {
-        console.log("WAITING!");
-        videoPlayer.addClass("vjs-seeking"); // show loading spinner
-        console.log("videoPlayer.readyState(): " + videoPlayer.readyState());
-        console.log("audio all ready states:" + audioPlayers.every(p => p.getVideoElement().readyState === 4));
-        console.log("allBuffersLoaded:" + allBuffersLoaded);
-    } else if (!readyForPlayback) {
-        console.log("not ready for playback yet");
-    } else if (wasPaused) {
-        console.log("no need to hurry: playback was paused");
-    } else if (!videoPlayer.paused()) {
-        console.log("playback is running - no problem here?");
-    }
-}
-
-function readyForPlayback() {
-    if (videoPlayer.readyState() >= 3
-        && audioPlayers.every(p => (p.getVideoElement().readyState === 4) || (p.getVideoElement().readyState === 0)) // either playback ready or no source set
-        && allBuffersLoaded)
-        return true;
-    else
-        return false;
 }
 
 function startSetup() {
@@ -276,33 +112,37 @@ function startSetup() {
 
 function setupAudio() {
     console.log("setup audio!");
-    allBuffersLoaded = false;
 
     channelMerger = context.createChannelMerger(numCh);
     console.log(channelMerger);
 
     // initialize ambisonic rotator
-    rotator = new ambisonics.sceneRotator(context, order);
+    rotator = new sceneRotator(context, order);
     console.log(rotator);
 
     // initialize matrix multiplier (for now use always 4th order as zoom matrix is in 4th order format)
     multiplier = new MatrixMultiplier(context, 4);
     console.log(multiplier);
 
-    decoder = new ambisonics.binDecoder(context, order);
+    decoder = new binDecoder(context, order);
     console.log(decoder);
 
-    var loader_filters = new ambisonics.HOAloader(context, order, irs, buffer => {
+    var loader_filters = new HOAloader(context, order, irs, buffer => {
         decoder.updateFilters(buffer);
-        allBuffersLoaded = true;
-        tryResumePlayback();
+        playbackEventHandler.setAllBuffersLoaded(true);
+        //playbackEventHandler.tryResumePlayback();
     });
     loader_filters.load();
 
     masterGain = context.createGain();
     masterGain.gain.value = 1.0;
 
-    for (let i = 0; i < nrActiveAudioPlayers; ++i) {
+    videoPlayer.on("volumechange", function () {
+        if (masterGain)
+            masterGain.gain.value = this.volume();
+    });
+
+    for (let i = 0; i < numActiveAudioPlayers; ++i) {
         // console.log(channelSplitters[i]);
         sourceNodes[i].channelCount = chCounts[i];
         // console.log($("#audio_" + chStrings[i])[0]);
@@ -363,7 +203,7 @@ function setupVideo() {
 
 function connectChannels() {
     let totalChannelCount = 0;
-    for (let i = 0; i < nrActiveAudioPlayers; ++i) {
+    for (let i = 0; i < numActiveAudioPlayers; ++i) {
         for (let ch = 0; ch < chCounts[i]; ++ch) {
             channelSplitters[i].connect(channelMerger, ch, totalChannelCount);
             ++totalChannelCount;
@@ -379,22 +219,23 @@ function setOrderDependentVariables() {
         case 4:
             chCounts = [8, 8, 8, 1];
             chStrings = ["01-08ch", "09-16ch", "17-24ch", "25-25ch"];
-            nrActiveAudioPlayers = 4;
+            numActiveAudioPlayers = 4;
             break;
         case 3:
             chCounts = [8, 8];
             chStrings = ["01-08ch", "09-16ch"];
-            nrActiveAudioPlayers = 2;
+            numActiveAudioPlayers = 2;
             break;
         case 2:
             chCounts = [8, 1];
             chStrings = ["01-08ch", "09-09ch"];
-            nrActiveAudioPlayers = 2;
+            numActiveAudioPlayers = 2;
             break;
         case 1:
             chCounts = [4];
             chStrings = ["01-04ch"];
-            nrActiveAudioPlayers = 1;
+            numActiveAudioPlayers = 1;
+            break;
         default:
             console.error("Error: Unsupported ambisonics order, choose order between 1 and 4.");
     }
