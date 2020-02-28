@@ -79,7 +79,6 @@ export default class PlaybackEventHandler {
 
         this.videoPlayer.on("seeked", function() {
             let currTime = this.currentTime();
-            console.log(currTime);
             for (let i = 0; i < self.numActiveAudioPlayers; ++i) {
                 self.audioPlayers[i].getVideoElement().currentTime = currTime; // do not use seek() method, there seems to be a bug
             }
@@ -147,9 +146,6 @@ export default class PlaybackEventHandler {
             //     return;
             // }
         }
-
-        console.log('audio at ' + this.audioPlayers[0].time());
-
         this.isSeeking = false;
         this.checkReadyStates();
     }
