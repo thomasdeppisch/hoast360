@@ -167,7 +167,8 @@ export default class PlaybackEventHandler {
             this.wasPlaying = false;
         }
         else {
-            this.tryToStartPlayback();
+            if (this.readyForPlayback())
+                this.startPlayback();
         }
     }
 
@@ -175,7 +176,7 @@ export default class PlaybackEventHandler {
         if (this.readyForPlayback() && this.videoPlayer.paused()) {
             this.videoPlayer.removeClass("vjs-seeking");
             if (this.wasPlaying) {
-                this.tryToStartPlayback();
+                this.startPlayback();
             }
             else {
                 this.videoPlayer.bigPlayButton.show();
@@ -184,12 +185,10 @@ export default class PlaybackEventHandler {
     }
 
     //resume playback if audio and video is ready
-    tryToStartPlayback() {
-        if (this.readyForPlayback()) {
-            this.wasPlaying = true;
-            this.waitingForPlayback = false;
-            this.videoPlayer.play();
-        }
+    startPlayback() {
+        this.wasPlaying = true;
+        this.waitingForPlayback = false;
+        this.videoPlayer.play();
     }
 
     readyForPlayback() {
