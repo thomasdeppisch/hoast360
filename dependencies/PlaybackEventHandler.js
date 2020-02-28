@@ -8,7 +8,6 @@ export default class PlaybackEventHandler {
     }
 
     initialize(videoPlayer, audioPlayers, numActiveAudioPlayers) {
-        console.log(videoPlayer);
         this.videoPlayer = videoPlayer;
         this.audioPlayers = audioPlayers;
         this.allBuffersLoaded = false;
@@ -81,6 +80,7 @@ export default class PlaybackEventHandler {
             let currTime = this.currentTime();
             for (let i = 0; i < self.numActiveAudioPlayers; ++i) {
                 self.audioPlayers[i].getVideoElement().currentTime = currTime; // do not use seek() method, there seems to be a bug
+                //self.audioPlayers[i].seek(currTime);
             }
         })
 

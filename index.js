@@ -41,9 +41,6 @@ playbackEventHandler = new PlaybackEventHandler(context);
 // create as many audio players as we need for max order
 for (let i = 0; i < maxNrOfAudioPlayers; ++i) {
     audioElements[i] = new Audio();
-    audioPlayers[i] = dashjs.MediaPlayer().create();
-    audioPlayers[i].initialize(audioElements[i]);
-    audioPlayers[i].setAutoPlay(false);
 
     // create sourceNodes and connect to splitters as we cannot disconnect and reuse these
     // (error: HTMLMediaElement already connected ...)
@@ -71,6 +68,9 @@ export function initialize(newMediaUrl, newOrder) {
     videoPlayer.src({ type: 'application/dash+xml', src: mediaUrl + '/video.mpd' });
 
     for (let i = 0; i < numActiveAudioPlayers; ++i) {
+        audioPlayers[i] = dashjs.MediaPlayer().create();
+        audioPlayers[i].initialize(audioElements[i]);
+        audioPlayers[i].setAutoPlay(false);
         audioPlayers[i].attachSource(mediaUrl + "/audio_" + chStrings[i] + ".mpd");
         // console.log(audioPlayers[i]);
         // console.log(audioPlayers[i].getVideoElement().readyState);
@@ -90,6 +90,8 @@ export function stop() {
     videoPlayer.pause();
     disconnectAudio();
     videoPlayer.dispose();
+    for (let i = 0; i < numActiveAudioPlayers; ++i)
+        audioPlayers[i].reset();
 }
 
 function disconnectAudio() {
