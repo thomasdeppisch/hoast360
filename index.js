@@ -3,10 +3,12 @@ import * as dashjs from 'dashjs';
 import videojs from 'video.js';
 import 'videojs-contrib-dash'
 import './dependencies/videojs-vr.min.js';
-import {sceneRotator, binDecoder, HOAloader} from 'ambisonics';
+import { sceneRotator } from 'ambisonics';
 import MatrixMultiplier from './dependencies/MatrixMultiplier.js';
 import { zoom, zoomfactors } from './dependencies/zoom.js';
 import PlaybackEventHandler from './dependencies/PlaybackEventHandler.js';
+import HOASTloader from './dependencies/HoastLoader.js';
+import HOASTBinDecoder from './dependencies/HoastBinauralDecoder.js';
 import './css/video-js.css';
 
 "use strict";
@@ -15,7 +17,7 @@ var order,
     chCounts,
     chStrings,
     numActiveAudioPlayers,
-    irs = "staticfiles/mediadb/irs/mls_o4_rev.wav",
+    irs,
     mediaUrl,
     audioElements = [],
     audioPlayers = [],
@@ -126,13 +128,12 @@ function setupAudio() {
     multiplier = new MatrixMultiplier(context, 4);
     console.log(multiplier);
 
-    decoder = new binDecoder(context, order);
+    decoder = new HOASTBinDecoder(context, order);
     console.log(decoder);
 
-    var loader_filters = new HOAloader(context, order, irs, buffer => {
-        decoder.updateFilters(buffer);
+    var loader_filters = new HOASTloader(context, order, irs, (foaBuffer, hoaBuffer) => {
+        decoder.updateFilters(foaBuffer, hoaBuffer);
         playbackEventHandler.setAllBuffersLoaded(true);
-        //playbackEventHandler.tryResumePlayback();
     });
     loader_filters.load();
 
@@ -222,21 +223,25 @@ function setOrderDependentVariables() {
             chCounts = [8, 8, 8, 1];
             chStrings = ["01-08ch", "09-16ch", "17-24ch", "25-25ch"];
             numActiveAudioPlayers = 4;
+            irs = "staticfiles/mediadb/irs/hoast_o4.wav";
             break;
         case 3:
             chCounts = [8, 8];
             chStrings = ["01-08ch", "09-16ch"];
             numActiveAudioPlayers = 2;
+            irs = "staticfiles/mediadb/irs/hoast_o3.wav";
             break;
         case 2:
             chCounts = [8, 1];
             chStrings = ["01-08ch", "09-09ch"];
             numActiveAudioPlayers = 2;
+            irs = "staticfiles/mediadb/irs/hoast_o2.wav";
             break;
         case 1:
             chCounts = [4];
             chStrings = ["01-04ch"];
             numActiveAudioPlayers = 1;
+            irs = "staticfiles/mediadb/irs/hoast_o1.wav";
             break;
         default:
             console.error("Error: Unsupported ambisonics order, choose order between 1 and 4.");
