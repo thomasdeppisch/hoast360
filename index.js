@@ -2,7 +2,7 @@ import $ from 'jquery';
 import * as dashjs from 'dashjs';
 import videojs from 'video.js';
 import 'videojs-contrib-dash'
-import './dependencies/videojs-vr.min.js';
+import './dependencies/videojs-xr.es.js';
 import { sceneRotator } from 'ambisonics';
 import MatrixMultiplier from './dependencies/MatrixMultiplier.js';
 import { zoom, zoomfactors } from './dependencies/zoom.js';
@@ -55,9 +55,9 @@ export function initialize(newMediaUrl, newOrder) {
     let playerhtml = "<video-js id='videojs-player' class='video-js vjs-big-play-centered' controls preload='auto' crossorigin='anonymous' data-setup='{}'></video-js>";
     $('#playerdiv').append(playerhtml);
     videoPlayer = videojs('videojs-player');
-    videoPlayer.vr({ projection: '360' });
+    videoPlayer.xr();
     console.log(videoPlayer);
-    console.log(videoPlayer.vr());
+    console.log(videoPlayer.xr());
 
     audioSetupComplete = false;
     videoSetupComplete = false;
@@ -78,8 +78,8 @@ export function initialize(newMediaUrl, newOrder) {
         // console.log(audioPlayers[i].getVideoElement().readyState);
     }
 
-    videoPlayer.vr().on("initialized", function () {
-        console.log("vr initialized");
+    videoPlayer.xr().on("initialized", function () {
+        console.log("xr initialized");
         startSetup();
         console.log(this);
         playbackEventHandler.initialize(videoPlayer, audioPlayers, numActiveAudioPlayers);
@@ -165,7 +165,7 @@ function setupAudio() {
 
 function setupVideo() {
     console.log("setup video");
-    var vidControls = videoPlayer.vr().controls3d;
+    var vidControls = videoPlayer.xr().controls3d;
 
     vidControls.orbit.minDistance = -700;
     vidControls.orbit.maxDistance = 200;
