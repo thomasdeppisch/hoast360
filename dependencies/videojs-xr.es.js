@@ -1,5 +1,6 @@
 /*! @name videojs-xr @version 0.0.0 @license MIT */
 import videojs from 'video.js';
+import window$1 from 'global/window';
 
 function _inheritsLoose(subClass, superClass) {
   subClass.prototype = Object.create(superClass.prototype);
@@ -62230,8 +62231,8 @@ var OrbitControls = function OrbitControls(object, domElement) {
   this.target = new Vector3(); // How far you can dolly in and out ( PerspectiveCamera only )
 
   this.currentDistance = 1;
-  this.minDistance = 0;
-  this.maxDistance = Infinity; // How far you can zoom in and out ( OrthographicCamera only )
+  this.minDistance = -700;
+  this.maxDistance = 200; // How far you can zoom in and out ( OrthographicCamera only )
 
   this.minZoom = 0;
   this.maxZoom = Infinity; // How far you can orbit vertically, upper and lower limits.
@@ -63330,6 +63331,130 @@ var BigVrPlayButton = /*#__PURE__*/function (_BigPlayButton) {
 
 videojs.registerComponent('BigVrPlayButton', BigVrPlayButton);
 
+var Button = videojs.getComponent('Button');
+
+var CardboardButton = /*#__PURE__*/function (_Button) {
+  _inheritsLoose(CardboardButton, _Button);
+
+  function CardboardButton(player, options) {
+    var _this;
+
+    _this = _Button.call(this, player, options) || this;
+    _this.handleVrDisplayActivate_ = videojs.bind(_assertThisInitialized(_this), _this.handleVrDisplayActivate_);
+    _this.handleVrDisplayDeactivate_ = videojs.bind(_assertThisInitialized(_this), _this.handleVrDisplayDeactivate_);
+    _this.handleVrDisplayPresentChange_ = videojs.bind(_assertThisInitialized(_this), _this.handleVrDisplayPresentChange_);
+    _this.handleOrientationChange_ = videojs.bind(_assertThisInitialized(_this), _this.handleOrientationChange_);
+    window$1.addEventListener('orientationchange', _this.handleOrientationChange_);
+    window$1.addEventListener('vrdisplayactivate', _this.handleVrDisplayActivate_);
+    window$1.addEventListener('vrdisplaydeactivate', _this.handleVrDisplayDeactivate_); // vrdisplaypresentchange does not fire activate or deactivate
+    // and happens when hitting the back button during cardboard mode
+    // so we need to make sure we stay in the correct state by
+    // listening to it and checking if we are presenting it or not
+
+    window$1.addEventListener('vrdisplaypresentchange', _this.handleVrDisplayPresentChange_); // we cannot show the cardboard button in fullscreen on
+    // android as it breaks the controls, and makes it impossible
+    // to exit cardboard mode
+
+    if (videojs.browser.IS_ANDROID) {
+      _this.on(player, 'fullscreenchange', function () {
+        if (player.isFullscreen()) {
+          _this.hide();
+        } else {
+          _this.show();
+        }
+      });
+    }
+
+    return _this;
+  }
+
+  var _proto = CardboardButton.prototype;
+
+  _proto.buildCSSClass = function buildCSSClass() {
+    return "vjs-button-vr " + _Button.prototype.buildCSSClass.call(this);
+  };
+
+  _proto.handleVrDisplayPresentChange_ = function handleVrDisplayPresentChange_() {
+    if (!this.player_.vr().vrDisplay.isPresenting && this.active_) {
+      this.handleVrDisplayDeactivate_();
+    }
+
+    if (this.player_.vr().vrDisplay.isPresenting && !this.active_) {
+      this.handleVrDisplayActivate_();
+    }
+  };
+
+  _proto.handleOrientationChange_ = function handleOrientationChange_() {
+    if (this.active_ && videojs.browser.IS_IOS) {
+      this.changeSize_();
+    }
+  };
+
+  _proto.changeSize_ = function changeSize_() {
+    this.player_.width(window$1.innerWidth);
+    this.player_.height(window$1.innerHeight);
+    window$1.dispatchEvent(new window$1.Event('resize'));
+  };
+
+  _proto.handleVrDisplayActivate_ = function handleVrDisplayActivate_() {
+    // we mimic fullscreen on IOS
+    if (videojs.browser.IS_IOS) {
+      this.oldWidth_ = this.player_.currentWidth();
+      this.oldHeight_ = this.player_.currentHeight();
+      this.player_.enterFullWindow();
+      this.changeSize_();
+    }
+
+    this.active_ = true;
+  };
+
+  _proto.handleVrDisplayDeactivate_ = function handleVrDisplayDeactivate_() {
+    // un-mimic fullscreen on iOS
+    if (videojs.browser.IS_IOS) {
+      if (this.oldWidth_) {
+        this.player_.width(this.oldWidth_);
+      }
+
+      if (this.oldHeight_) {
+        this.player_.height(this.oldHeight_);
+      }
+
+      this.player_.exitFullWindow();
+    }
+
+    this.active_ = false;
+  };
+
+  _proto.handleClick = function handleClick(event) {
+    // if cardboard mode display is not active, activate it
+    // otherwise deactivate it
+    if (!this.active_) {
+      // This starts playback mode when the cardboard button
+      // is clicked on Andriod. We need to do this as the controls
+      // disappear
+      if (!this.player_.hasStarted() && videojs.browser.IS_ANDROID) {
+        this.player_.play();
+      }
+
+      window$1.dispatchEvent(new window$1.Event('vrdisplayactivate'));
+    } else {
+      window$1.dispatchEvent(new window$1.Event('vrdisplaydeactivate'));
+    }
+  };
+
+  _proto.dispose = function dispose() {
+    _Button.prototype.dispose.call(this);
+
+    window$1.removeEventListener('vrdisplayactivate', this.handleVrDisplayActivate_);
+    window$1.removeEventListener('vrdisplaydeactivate', this.handleVrDisplayDeactivate_);
+    window$1.removeEventListener('vrdisplaypresentchange', this.handleVrDisplayPresentChange_);
+  };
+
+  return CardboardButton;
+}(Button);
+
+videojs.registerComponent('CardboardButton', CardboardButton);
+
 var Plugin = videojs.getPlugin('plugin'); // Default options for the plugin.
 
 var defaults = {};
@@ -63367,6 +63492,7 @@ var Xr = /*#__PURE__*/function (_Plugin) {
     _this.handleVrDisplayDeactivate_ = videojs.bind(_assertThisInitialized(_this), _this.handleVrDisplayDeactivate_);
     _this.handleResize_ = videojs.bind(_assertThisInitialized(_this), _this.handleResize_);
     _this.animate_ = videojs.bind(_assertThisInitialized(_this), _this.animate_);
+    _this.currentSession = null;
 
     _this.on(player, 'loadedmetadata', _this.init);
 
@@ -63380,88 +63506,74 @@ var Xr = /*#__PURE__*/function (_Plugin) {
   var _proto = Xr.prototype;
 
   _proto.handleVrDisplayActivate_ = function handleVrDisplayActivate_() {
-    var _this2 = this;
-
-    if (!this.vrDisplay) {
-      return;
-    }
-
-    this.vrDisplay.requestPresent([{
-      source: this.renderedCanvas
-    }]).then(function () {
-      if (!_this2.vrDisplay.cardboardUI_ || !videojs.browser.IS_IOS) {
-        return;
-      } // webvr-polyfill/cardboard ui only watches for click events
-      // to tell that the back arrow button is pressed during cardboard vr.
-      // but somewhere along the line these events are silenced with preventDefault
-      // but only on iOS, so we translate them ourselves here
-
-
-      var touches = [];
-
-      var iosCardboardTouchStart_ = function iosCardboardTouchStart_(e) {
-        for (var i = 0; i < e.touches.length; i++) {
-          touches.push(e.touches[i]);
-        }
-      };
-
-      var iosCardboardTouchEnd_ = function iosCardboardTouchEnd_(e) {
-        if (!touches.length) {
-          return;
-        }
-
-        touches.forEach(function (t) {
-          var simulatedClick = new window.MouseEvent('click', {
-            screenX: t.screenX,
-            screenY: t.screenY,
-            clientX: t.clientX,
-            clientY: t.clientY
-          });
-
-          _this2.renderedCanvas.dispatchEvent(simulatedClick);
-        });
-        touches = [];
-      };
-
-      _this2.renderedCanvas.addEventListener('touchstart', iosCardboardTouchStart_);
-
-      _this2.renderedCanvas.addEventListener('touchend', iosCardboardTouchEnd_);
-
-      _this2.iosRevertTouchToClick_ = function () {
-        _this2.renderedCanvas.removeEventListener('touchstart', iosCardboardTouchStart_);
-
-        _this2.renderedCanvas.removeEventListener('touchend', iosCardboardTouchEnd_);
-
-        _this2.iosRevertTouchToClick_ = null;
-      };
-    });
+    if (!this.xrSupported) return;
+    var self = this;
+    var sessionInit = {
+      optionalFeatures: ['local-floor']
+    };
+    navigator.xr.requestSession('immersive-vr', sessionInit).then(function (session) {
+      self.renderer.xr.setSession(session);
+      self.xrActive = true;
+      self.currentSession = session;
+    }); // if (!this.vrDisplay) {
+    //     return;
+    // }
+    // this.vrDisplay.requestPresent([{ source: this.renderedCanvas }]).then(() => {
+    //     if (!this.vrDisplay.cardboardUI_ || !videojs.browser.IS_IOS) {
+    //         return;
+    //     }
+    //     // webvr-polyfill/cardboard ui only watches for click events
+    //     // to tell that the back arrow button is pressed during cardboard vr.
+    //     // but somewhere along the line these events are silenced with preventDefault
+    //     // but only on iOS, so we translate them ourselves here
+    //     let touches = [];
+    //     const iosCardboardTouchStart_ = (e) => {
+    //         for (let i = 0; i < e.touches.length; i++) {
+    //             touches.push(e.touches[i]);
+    //         }
+    //     };
+    //     const iosCardboardTouchEnd_ = (e) => {
+    //         if (!touches.length) {
+    //             return;
+    //         }
+    //         touches.forEach((t) => {
+    //             const simulatedClick = new window.MouseEvent('click', {
+    //                 screenX: t.screenX,
+    //                 screenY: t.screenY,
+    //                 clientX: t.clientX,
+    //                 clientY: t.clientY
+    //             });
+    //             this.renderedCanvas.dispatchEvent(simulatedClick);
+    //         });
+    //         touches = [];
+    //     };
+    //     this.renderedCanvas.addEventListener('touchstart', iosCardboardTouchStart_);
+    //     this.renderedCanvas.addEventListener('touchend', iosCardboardTouchEnd_);
+    //     this.iosRevertTouchToClick_ = () => {
+    //         this.renderedCanvas.removeEventListener('touchstart', iosCardboardTouchStart_);
+    //         this.renderedCanvas.removeEventListener('touchend', iosCardboardTouchEnd_);
+    //         this.iosRevertTouchToClick_ = null;
+    //     };
+    // });
   };
 
   _proto.handleVrDisplayDeactivate_ = function handleVrDisplayDeactivate_() {
-    if (!this.vrDisplay || !this.vrDisplay.isPresenting) {
-      return;
-    }
-
-    if (this.iosRevertTouchToClick_) {
-      this.iosRevertTouchToClick_();
-    }
-
-    this.vrDisplay.exitPresent();
+    if (!this.xrSupported) return;
+    this.currentSession.end();
+    this.currentSession = null; // if (!this.vrDisplay || !this.vrDisplay.isPresenting) {
+    //     return;
+    // }
+    // if (this.iosRevertTouchToClick_) {
+    //     this.iosRevertTouchToClick_();
+    // }
+    // this.vrDisplay.exitPresent();
   };
 
   _proto.requestAnimationFrame = function requestAnimationFrame(fn) {
-    if (this.vrDisplay) {
-      return this.vrDisplay.requestAnimationFrame(fn);
-    }
-
     return this.player.requestAnimationFrame(fn);
   };
 
   _proto.cancelAnimationFrame = function cancelAnimationFrame(id) {
-    if (this.vrDisplay) {
-      return this.vrDisplay.cancelAnimationFrame(id);
-    }
-
     return this.player.cancelAnimationFrame(id);
   };
 
@@ -63486,21 +63598,20 @@ var Xr = /*#__PURE__*/function (_Plugin) {
 
     this.camera.getWorldDirection(this.cameraVector);
     this.animationFrameId_ = this.requestAnimationFrame(this.animate_);
-    this.controls3d.update();
+    if (!this.xrActive) this.controls3d.update();
     this.renderer.render(this.scene, this.camera);
   };
 
   _proto.handleResize_ = function handleResize_() {
     var width = this.player.currentWidth();
-    var height = this.player.currentHeight(); // this.effect.setSize(width, height, false);
-
+    var height = this.player.currentHeight();
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
   };
 
   _proto.init = function init() {
-    console.log(this); // this.reset();
-
+    this.reset();
+    this.xrSupported = false;
     this.camera = new PerspectiveCamera(75, this.player.currentWidth() / this.player.currentHeight(), 1, 1000); // Store vector representing the direction in which the camera is looking, in world space.
 
     this.cameraVector = new Vector3();
@@ -63537,8 +63648,7 @@ var Xr = /*#__PURE__*/function (_Plugin) {
       y: 1,
       z: 0
     }, -Math.PI / 2);
-    this.scene.add(this.movieScreen); // this.currentProjection_ = '360';
-
+    this.scene.add(this.movieScreen);
     this.player.removeChild('BigPlayButton');
     this.player.addChild('BigVrPlayButton', {}, this.bigPlayButtonIndex_);
     this.player.bigPlayButton = this.player.getChild('BigVrPlayButton');
@@ -63571,47 +63681,48 @@ var Xr = /*#__PURE__*/function (_Plugin) {
     var videoElStyle = this.getVideoEl_().style;
     this.player.el().insertBefore(this.renderedCanvas, this.player.el().firstChild);
     videoElStyle.zIndex = '-1';
-    videoElStyle.opacity = '0';
+    videoElStyle.opacity = '0'; //document.body.appendChild( VRButton.createButton( this.renderer, { referenceSpaceType: 'local' } ) );
+
+    this.xrActive = false;
+
+    if (!this.controls3d) {
+      // self.controls3d = new OrbitControls(self.camera, self.renderedCanvas);
+      var options = {
+        camera: this.camera,
+        canvas: this.renderedCanvas,
+        // check if its a half sphere view projection
+        halfView: false,
+        orientation: false
+      };
+      this.controls3d = new OrbitOrientationControls(options);
+      this.canvasPlayerControls = new CanvasPlayerControls(this.player, this.renderedCanvas);
+    }
 
     if (window.navigator.xr) {
-      console.log('webxr supported');
       this.renderer.xr.enabled = true;
+      this.renderer.xr.setReferenceSpaceType('local');
       var self = this;
       navigator.xr.isSessionSupported('immersive-vr').then(function (supported) {
         if (supported) {
-          var sessionInit = {
-            optionalFeatures: ['local-floor', 'bounded-floor']
-          };
-          navigator.xr.requestSession('immersive-vr', sessionInit).then(function (session) {
-            self.renderer.xr.setSession(session);
-          });
+          self.xrSupported = true;
+          self.addCardboardButton_();
+          console.log('webxr session supported');
         } else {
           console.log('web xr device not found, using orbit controls');
-
-          if (!self.controls3d) {
-            // self.controls3d = new OrbitControls(self.camera, self.renderedCanvas);
-            var options = {
-              camera: self.camera,
-              canvas: self.renderedCanvas,
-              // check if its a half sphere view projection
-              halfView: false,
-              orientation: false
-            };
-            self.controls3d = new OrbitOrientationControls(options);
-            self.canvasPlayerControls = new CanvasPlayerControls(self.player, self.renderedCanvas);
-            self.completeInitialization(); // wait until controls are initialized
-          }
         }
       });
-      this.animationFrameId_ = this.requestAnimationFrame(this.animate_);
     } else {
-      console.log('web xr not available (only works in https)');
-    } // this.on(this.player, 'fullscreenchange', this.handleResize_);
-    // window.addEventListener('vrdisplaypresentchange', this.handleResize_, true);
-    // window.addEventListener('resize', this.handleResize_, true);
-    // window.addEventListener('vrdisplayactivate', this.handleVrDisplayActivate_, true);
-    // window.addEventListener('vrdisplaydeactivate', this.handleVrDisplayDeactivate_, true);
+      console.log('web xr not available');
+    }
 
+    self.completeInitialization(); // wait until controls are initialized
+
+    this.animationFrameId_ = this.requestAnimationFrame(this.animate_);
+    this.on(this.player, 'fullscreenchange', this.handleResize_);
+    window.addEventListener('vrdisplaypresentchange', this.handleResize_, true);
+    window.addEventListener('resize', this.handleResize_, true);
+    window.addEventListener('vrdisplayactivate', this.handleVrDisplayActivate_, true);
+    window.addEventListener('vrdisplaydeactivate', this.handleVrDisplayDeactivate_, true);
   };
 
   _proto.completeInitialization = function completeInitialization() {
@@ -63634,12 +63745,6 @@ var Xr = /*#__PURE__*/function (_Plugin) {
       return;
     }
 
-    if (this.omniController) {
-      this.omniController.off('audiocontext-suspended');
-      this.omniController.dispose();
-      this.omniController = undefined;
-    }
-
     if (this.controls3d) {
       this.controls3d.dispose();
       this.controls3d = null;
@@ -63648,11 +63753,6 @@ var Xr = /*#__PURE__*/function (_Plugin) {
     if (this.canvasPlayerControls) {
       this.canvasPlayerControls.dispose();
       this.canvasPlayerControls = null;
-    }
-
-    if (this.effect) {
-      this.effect.dispose();
-      this.effect = null;
     }
 
     window.removeEventListener('resize', this.handleResize_, true);
@@ -63676,9 +63776,7 @@ var Xr = /*#__PURE__*/function (_Plugin) {
 
     var videoElStyle = this.getVideoEl_().style;
     videoElStyle.zIndex = '';
-    videoElStyle.opacity = ''; // set the current projection to the default
-
-    this.currentProjection_ = this.defaultProjection_; // reset the ios touch to click workaround
+    videoElStyle.opacity = ''; // reset the ios touch to click workaround
 
     if (this.iosRevertTouchToClick_) {
       this.iosRevertTouchToClick_();
