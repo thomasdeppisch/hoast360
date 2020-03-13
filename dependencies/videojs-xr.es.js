@@ -63421,8 +63421,10 @@ var CardboardButton = /*#__PURE__*/function (_Button) {
       //     this.player_.play();
       //   }
       window$1.dispatchEvent(new window$1.Event('vrdisplayactivate'));
+      this.active_ = true;
     } else {
       window$1.dispatchEvent(new window$1.Event('vrdisplaydeactivate'));
+      this.active_ = false;
     }
   };
 
@@ -63593,7 +63595,7 @@ var Xr = /*#__PURE__*/function (_Plugin) {
     this.animationFrameId_ = this.requestAnimationFrame(this.animate_);
     if (!this.xrActive) this.controls3d.update();
 
-    if (this.xrActive) {
+    if (this.xrActive && this.xrPose) {
       this.xrPose = xrFrame.getViewerPose(this.xrReferenceSpace);
       this.trigger('xrCameraUpdate');
     }
