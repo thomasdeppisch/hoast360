@@ -30,9 +30,10 @@
     "webpack-cli": "^3.3.10"
   },
   "dependencies": {
-    "ambisonics": "^0.2.3",
     "dashjs": "^3.0.1",
     "jquery": "^3.4.1",
+    "numeric": "^1.2.6",
+    "spherical-harmonic-transform": "^0.1.1",
     "video.js": "^7.6.6",
     "videojs-contrib-dash": "^2.11.0"
   }

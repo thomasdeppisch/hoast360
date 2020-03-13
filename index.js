@@ -3,12 +3,12 @@ import * as dashjs from 'dashjs';
 import videojs from 'video.js';
 import 'videojs-contrib-dash'
 import './dependencies/videojs-xr.es.js';
-import { sceneRotator } from 'ambisonics';
 import MatrixMultiplier from './dependencies/MatrixMultiplier.js';
 import { zoom, zoomfactors } from './dependencies/zoom.js';
 import PlaybackEventHandler from './dependencies/PlaybackEventHandler.js';
 import HOASTloader from './dependencies/HoastLoader.js';
 import HOASTBinDecoder from './dependencies/HoastBinauralDecoder.js';
+import HOASTRotator from './dependencies/HoastRotator.js';
 import './css/video-js.css';
 
 "use strict";
@@ -26,7 +26,7 @@ var order,
     audioSetupComplete = false,
     videoSetupComplete = false,
     context, channelMerger, rotator, multiplier, decoder,
-    viewAzim, viewElev, masterGain, numCh, videoPlayer, playbackEventHandler;
+    masterGain, numCh, videoPlayer, playbackEventHandler;
 
 var maxOrder = 4;
 var tracksPerAudioPlayer = 8;
@@ -121,7 +121,7 @@ function setupAudio() {
     console.log(channelMerger);
 
     // initialize ambisonic rotator
-    rotator = new sceneRotator(context, order);
+    rotator = new HOASTRotator(context, order);
     console.log(rotator);
 
     // initialize matrix multiplier (for now use always 4th order as zoom matrix is in 4th order format)
@@ -165,22 +165,23 @@ function setupAudio() {
 
 function setupVideo() {
     console.log("setup video");
-    var vidControls = videoPlayer.xr().controls3d;
+    videoPlayer.xr().camera.rotation.order = 'YZX'; // in THREE Y is vertical axis! -> set to yaw-pitch-roll
+    // console.log(videoPlayer.xr().camera);
 
+    var vidControls = videoPlayer.xr().controls3d;
     vidControls.orbit.minDistance = -700;
     vidControls.orbit.maxDistance = 200;
     console.log(vidControls);
 
     // this.controls3d.orbit.on( .. ) does not work for custom events!
-    vidControls.orbit.addEventListener("change", function () { // view change
-        // console.log("change!");
-        viewAzim = this.getAzimuthalAngle() * 180 / Math.PI;
-        viewElev = -90 + this.getPolarAngle() * 180 / Math.PI;
-        // console.log(viewAzim);
-        // console.log(viewElev);
-        rotator.yaw = viewAzim;
-        rotator.pitch = viewElev;
-        rotator.updateRotMtx();
+    // view change
+    vidControls.orbit.addEventListener("change", function () { 
+        rotator.updateRotationFromCamera(videoPlayer.xr().camera.matrixWorld.elements);
+    });
+
+    // view change if HMD is used
+    videoPlayer.xr().on("xrCameraUpdate", function () {
+        rotator.updateRotationFromCamera(this.camera.matrixWorld.elements);
     });
 
     vidControls.orbit.addEventListener("zoom", function () { // zoom change

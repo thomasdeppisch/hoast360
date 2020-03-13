@@ -63599,6 +63599,7 @@ var Xr = /*#__PURE__*/function (_Plugin) {
     this.camera.getWorldDirection(this.cameraVector);
     this.animationFrameId_ = this.requestAnimationFrame(this.animate_);
     if (!this.xrActive) this.controls3d.update();
+    if (this.xrActive) this.trigger('xrCameraUpdate');
     this.renderer.render(this.scene, this.camera);
   };
 
