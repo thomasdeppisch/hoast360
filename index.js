@@ -181,7 +181,12 @@ function setupVideo() {
 
     // view change if HMD is used
     videoPlayer.xr().on("xrCameraUpdate", function () {
-        rotator.updateRotationFromCamera(this.camera.matrixWorld.elements);
+        // console.log('yaw: ' + this.camera.rotation.y * 180 / Math.PI);
+        // console.log('pitch: ' + this.camera.rotation.z * 180 / Math.PI);
+        // console.log('roll: ' + this.camera.rotation.x * 180 / Math.PI);
+        // console.log(this.xrPose);
+        if (this.xrPose)
+            rotator.updateRotationFromCamera(this.xrPose.poseModelMatrix);
     });
 
     vidControls.orbit.addEventListener("zoom", function () { // zoom change
