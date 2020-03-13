@@ -63470,7 +63470,7 @@ var Xr = /*#__PURE__*/function (_Plugin) {
     _this = _Plugin.call(this, player) || this;
     _this.options = videojs.mergeOptions(defaults, options);
     _this.bigPlayButtonIndex_ = player.children().indexOf(player.getChild('BigPlayButton')) || 0;
-    _this.polyfill_ = new WebXRPolyfill();
+    if (!navigator.xr) _this.polyfill_ = new WebXRPolyfill();
     _this.handleVrDisplayActivate_ = videojs.bind(_assertThisInitialized(_this), _this.handleVrDisplayActivate_);
     _this.handleVrDisplayDeactivate_ = videojs.bind(_assertThisInitialized(_this), _this.handleVrDisplayDeactivate_);
     _this.handleResize_ = videojs.bind(_assertThisInitialized(_this), _this.handleResize_);
@@ -63545,6 +63545,12 @@ var Xr = /*#__PURE__*/function (_Plugin) {
 
   _proto.handleVrDisplayDeactivate_ = function handleVrDisplayDeactivate_() {
     if (!this.xrSupported) return;
+
+    if (this.animationFrameId_) {
+      this.currentSession.cancelAnimationFrame(this.animationFrameId_);
+      this.animationFrameId_ = 0;
+    }
+
     this.currentSession.end();
     this.currentSession = null;
     this.xrActive = false; // if (!this.vrDisplay || !this.vrDisplay.isPresenting) {
@@ -63588,8 +63594,8 @@ var Xr = /*#__PURE__*/function (_Plugin) {
     if (!this.xrActive) this.controls3d.update();
 
     if (this.xrActive) {
-      this.trigger('xrCameraUpdate');
       this.xrPose = xrFrame.getViewerPose(this.xrReferenceSpace);
+      this.trigger('xrCameraUpdate');
     }
 
     this.renderer.render(this.scene, this.camera);

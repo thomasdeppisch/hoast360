@@ -184,9 +184,17 @@ function setupVideo() {
         // console.log('yaw: ' + this.camera.rotation.y * 180 / Math.PI);
         // console.log('pitch: ' + this.camera.rotation.z * 180 / Math.PI);
         // console.log('roll: ' + this.camera.rotation.x * 180 / Math.PI);
+
+        // console.log('new stack');
         // console.log(this.xrPose);
-        if (this.xrPose)
-            rotator.updateRotationFromCamera(this.xrPose.poseModelMatrix);
+        // console.log(this.xrPose.leftViewMatrix);
+        // console.log(this.xrPose.rightViewMatrix);
+        // console.log(this.xrPose.poseModelMatrix);
+        // console.log(this.xrPose.views[0].transform.matrix);
+        
+        // console.log(this.xrPose.views[0].projectionMatrix);
+
+        rotator.updateRotationFromCamera(this.xrPose.views[0].transform.matrix);
     });
 
     vidControls.orbit.addEventListener("zoom", function () { // zoom change
