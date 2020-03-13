@@ -63337,93 +63337,78 @@ var CardboardButton = /*#__PURE__*/function (_Button) {
   _inheritsLoose(CardboardButton, _Button);
 
   function CardboardButton(player, options) {
-    var _this;
-
-    _this = _Button.call(this, player, options) || this;
-    _this.handleVrDisplayActivate_ = videojs.bind(_assertThisInitialized(_this), _this.handleVrDisplayActivate_);
-    _this.handleVrDisplayDeactivate_ = videojs.bind(_assertThisInitialized(_this), _this.handleVrDisplayDeactivate_);
-    _this.handleVrDisplayPresentChange_ = videojs.bind(_assertThisInitialized(_this), _this.handleVrDisplayPresentChange_);
-    _this.handleOrientationChange_ = videojs.bind(_assertThisInitialized(_this), _this.handleOrientationChange_);
-    window$1.addEventListener('orientationchange', _this.handleOrientationChange_);
-    window$1.addEventListener('vrdisplayactivate', _this.handleVrDisplayActivate_);
-    window$1.addEventListener('vrdisplaydeactivate', _this.handleVrDisplayDeactivate_); // vrdisplaypresentchange does not fire activate or deactivate
+    return _Button.call(this, player, options) || this; // this.handleVrDisplayActivate_ = videojs.bind(this, this.handleVrDisplayActivate_);
+    // this.handleVrDisplayDeactivate_ = videojs.bind(this, this.handleVrDisplayDeactivate_);
+    // this.handleVrDisplayPresentChange_ = videojs.bind(this, this.handleVrDisplayPresentChange_);
+    // this.handleOrientationChange_ = videojs.bind(this, this.handleOrientationChange_);
+    // window.addEventListener('orientationchange', this.handleOrientationChange_);
+    // window.addEventListener('vrdisplayactivate', this.handleVrDisplayActivate_);
+    // window.addEventListener('vrdisplaydeactivate', this.handleVrDisplayDeactivate_);
+    // vrdisplaypresentchange does not fire activate or deactivate
     // and happens when hitting the back button during cardboard mode
     // so we need to make sure we stay in the correct state by
     // listening to it and checking if we are presenting it or not
-
-    window$1.addEventListener('vrdisplaypresentchange', _this.handleVrDisplayPresentChange_); // we cannot show the cardboard button in fullscreen on
+    // window.addEventListener('vrdisplaypresentchange', this.handleVrDisplayPresentChange_);
+    // we cannot show the cardboard button in fullscreen on
     // android as it breaks the controls, and makes it impossible
     // to exit cardboard mode
-
-    if (videojs.browser.IS_ANDROID) {
-      _this.on(player, 'fullscreenchange', function () {
-        if (player.isFullscreen()) {
-          _this.hide();
-        } else {
-          _this.show();
-        }
-      });
-    }
-
-    return _this;
+    // if (videojs.browser.IS_ANDROID) {
+    //   this.on(player, 'fullscreenchange', () => {
+    //     if (player.isFullscreen()) {
+    //       this.hide();
+    //     } else {
+    //       this.show();
+    //     }
+    //   });
+    // }
   }
 
   var _proto = CardboardButton.prototype;
 
   _proto.buildCSSClass = function buildCSSClass() {
     return "vjs-button-vr " + _Button.prototype.buildCSSClass.call(this);
-  };
-
-  _proto.handleVrDisplayPresentChange_ = function handleVrDisplayPresentChange_() {
-    if (!this.player_.vr().vrDisplay.isPresenting && this.active_) {
-      this.handleVrDisplayDeactivate_();
-    }
-
-    if (this.player_.vr().vrDisplay.isPresenting && !this.active_) {
-      this.handleVrDisplayActivate_();
-    }
-  };
-
-  _proto.handleOrientationChange_ = function handleOrientationChange_() {
-    if (this.active_ && videojs.browser.IS_IOS) {
-      this.changeSize_();
-    }
-  };
-
-  _proto.changeSize_ = function changeSize_() {
-    this.player_.width(window$1.innerWidth);
-    this.player_.height(window$1.innerHeight);
-    window$1.dispatchEvent(new window$1.Event('resize'));
-  };
-
-  _proto.handleVrDisplayActivate_ = function handleVrDisplayActivate_() {
-    // we mimic fullscreen on IOS
-    if (videojs.browser.IS_IOS) {
-      this.oldWidth_ = this.player_.currentWidth();
-      this.oldHeight_ = this.player_.currentHeight();
-      this.player_.enterFullWindow();
-      this.changeSize_();
-    }
-
-    this.active_ = true;
-  };
-
-  _proto.handleVrDisplayDeactivate_ = function handleVrDisplayDeactivate_() {
-    // un-mimic fullscreen on iOS
-    if (videojs.browser.IS_IOS) {
-      if (this.oldWidth_) {
-        this.player_.width(this.oldWidth_);
-      }
-
-      if (this.oldHeight_) {
-        this.player_.height(this.oldHeight_);
-      }
-
-      this.player_.exitFullWindow();
-    }
-
-    this.active_ = false;
-  };
+  } //   handleVrDisplayPresentChange_() {
+  //     if (!this.player_.vr().vrDisplay.isPresenting && this.active_) {
+  //       this.handleVrDisplayDeactivate_();
+  //     }
+  //     if (this.player_.vr().vrDisplay.isPresenting && !this.active_) {
+  //       this.handleVrDisplayActivate_();
+  //     }
+  //   }
+  //   handleOrientationChange_() {
+  //     if (this.active_ && videojs.browser.IS_IOS) {
+  //       this.changeSize_();
+  //     }
+  //   }
+  //   changeSize_() {
+  //     this.player_.width(window.innerWidth);
+  //     this.player_.height(window.innerHeight);
+  //     window.dispatchEvent(new window.Event('resize'));
+  //   }
+  //   handleVrDisplayActivate_() {
+  //     // we mimic fullscreen on IOS
+  //     if (videojs.browser.IS_IOS) {
+  //       this.oldWidth_ = this.player_.currentWidth();
+  //       this.oldHeight_ = this.player_.currentHeight();
+  //       this.player_.enterFullWindow();
+  //       this.changeSize_();
+  //     }
+  //     this.active_ = true;
+  //   }
+  //   handleVrDisplayDeactivate_() {
+  //     // un-mimic fullscreen on iOS
+  //     if (videojs.browser.IS_IOS) {
+  //       if (this.oldWidth_) {
+  //         this.player_.width(this.oldWidth_);
+  //       }
+  //       if (this.oldHeight_) {
+  //         this.player_.height(this.oldHeight_);
+  //       }
+  //       this.player_.exitFullWindow();
+  //     }
+  //     this.active_ = false;
+  //   }
+  ;
 
   _proto.handleClick = function handleClick(event) {
     // if cardboard mode display is not active, activate it
@@ -63432,10 +63417,9 @@ var CardboardButton = /*#__PURE__*/function (_Button) {
       // This starts playback mode when the cardboard button
       // is clicked on Andriod. We need to do this as the controls
       // disappear
-      if (!this.player_.hasStarted() && videojs.browser.IS_ANDROID) {
-        this.player_.play();
-      }
-
+      //   if (!this.player_.hasStarted() && videojs.browser.IS_ANDROID) {
+      //     this.player_.play();
+      //   }
       window$1.dispatchEvent(new window$1.Event('vrdisplayactivate'));
     } else {
       window$1.dispatchEvent(new window$1.Event('vrdisplaydeactivate'));
@@ -63443,11 +63427,10 @@ var CardboardButton = /*#__PURE__*/function (_Button) {
   };
 
   _proto.dispose = function dispose() {
-    _Button.prototype.dispose.call(this);
+    _Button.prototype.dispose.call(this); // window.removeEventListener('vrdisplayactivate', this.handleVrDisplayActivate_);
+    // window.removeEventListener('vrdisplaydeactivate', this.handleVrDisplayDeactivate_);
+    // window.removeEventListener('vrdisplaypresentchange', this.handleVrDisplayPresentChange_);
 
-    window$1.removeEventListener('vrdisplayactivate', this.handleVrDisplayActivate_);
-    window$1.removeEventListener('vrdisplaydeactivate', this.handleVrDisplayDeactivate_);
-    window$1.removeEventListener('vrdisplaypresentchange', this.handleVrDisplayPresentChange_);
   };
 
   return CardboardButton;
