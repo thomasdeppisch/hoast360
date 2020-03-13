@@ -63595,7 +63595,7 @@ var Xr = /*#__PURE__*/function (_Plugin) {
     this.animationFrameId_ = this.requestAnimationFrame(this.animate_);
     if (!this.xrActive) this.controls3d.update();
 
-    if (this.xrActive && this.xrPose) {
+    if (this.xrActive && xrFrame) {
       this.xrPose = xrFrame.getViewerPose(this.xrReferenceSpace);
       this.trigger('xrCameraUpdate');
     }
