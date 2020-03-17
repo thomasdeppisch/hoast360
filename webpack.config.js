@@ -13,7 +13,7 @@ const config = {
             {
                 enforce: 'pre',
                 test: /\.js$/,
-                exclude: /node_modules|dependencies(?:\/|\\)videojs-vr\.min\.js/,
+                exclude: /node_modules|dependencies(?:\/|\\)videojs-xr\.es\.js/,
                 loader: 'eslint-loader',
             },
             {
