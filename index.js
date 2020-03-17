@@ -4,7 +4,7 @@ import videojs from 'video.js';
 import 'videojs-contrib-dash'
 import './dependencies/videojs-xr.es.js';
 import MatrixMultiplier from './dependencies/MatrixMultiplier.js';
-import { zoom, zoomfactors } from './dependencies/zoom.js';
+import * as zoom from './dependencies/HoastZoom.js';
 import PlaybackEventHandler from './dependencies/PlaybackEventHandler.js';
 import HOASTloader from './dependencies/HoastLoader.js';
 import HOASTBinDecoder from './dependencies/HoastBinauralDecoder.js';
@@ -65,7 +65,6 @@ export function initialize(newMediaUrl, newOrder) {
     order = newOrder;
     mediaUrl = newMediaUrl;
     setOrderDependentVariables();
-    console.log('numActiveAudioPlayer: ' + numActiveAudioPlayers);
 
     videoPlayer.src({ type: 'application/dash+xml', src: mediaUrl + '/video.mpd' });
 
@@ -87,10 +86,10 @@ export function initialize(newMediaUrl, newOrder) {
 }
 
 export function stop() {
-    console.log("stopping");
     playbackEventHandler.unregisterEvents();
     videoPlayer.pause();
     disconnectAudio();
+    videoPlayer.xr().dispose();
     videoPlayer.dispose();
     for (let i = 0; i < numActiveAudioPlayers; ++i)
         audioPlayers[i].reset();
@@ -115,8 +114,6 @@ function startSetup() {
 }
 
 function setupAudio() {
-    console.log("setup audio!");
-
     channelMerger = context.createChannelMerger(numCh);
     console.log(channelMerger);
 
@@ -164,11 +161,10 @@ function setupAudio() {
 }
 
 function setupVideo() {
-    console.log("setup video");
     videoPlayer.xr().camera.rotation.order = 'YZX'; // in THREE Y is vertical axis! -> set to yaw-pitch-roll
     // console.log(videoPlayer.xr().camera);
 
-    var vidControls = videoPlayer.xr().controls3d;
+    let vidControls = videoPlayer.xr().controls3d;
     vidControls.orbit.minDistance = -700;
     vidControls.orbit.maxDistance = 200;
     console.log(vidControls);
@@ -185,34 +181,26 @@ function setupVideo() {
         // console.log('pitch: ' + this.camera.rotation.z * 180 / Math.PI);
         // console.log('roll: ' + this.camera.rotation.x * 180 / Math.PI);
 
-        // console.log('new stack');
-        // console.log(this.xrPose);
         // console.log(this.xrPose.leftViewMatrix);
         // console.log(this.xrPose.rightViewMatrix);
         // console.log(this.xrPose.poseModelMatrix);
         // console.log(this.xrPose.views[0].transform.matrix);
-        
         // console.log(this.xrPose.views[0].projectionMatrix);
 
         rotator.updateRotationFromCamera(this.xrPose.views[0].transform.matrix);
     });
 
     vidControls.orbit.addEventListener("zoom", function () { // zoom change
-        // console.log("zoom!");
-        //console.log(this.currentDistance);
-        //console.log("zoom factor = " + zoom_factor)
-        if (this.currentDistance <= 0) {
-            let zoom_factor = Math.pow(2, -this.currentDistance / 500);
+        updateZoom();
+    });
 
-            for (let zz = 0; zz < zoomfactors.length; zz++) {
-                if (zoom_factor > zoomfactors[zoomfactors.length - zz - 1]) {
-                    multiplier.updateMtx(zoom[zoomfactors.length - zz - 1]);
-                    break;
-                }
-            }
-        } else {
-            multiplier.updateMtx(zoom[0]);
-        }
+    videoPlayer.xr().on("xrSessionActivated", function () {
+        multiplier.bypass(true);
+    });
+
+    videoPlayer.xr().on("xrSessionDeactivated", function () {
+        multiplier.bypass(false);
+        updateZoom();
     });
 
     videoSetupComplete = true;
@@ -227,6 +215,26 @@ function connectChannels() {
         }
     }
 
+}
+
+function updateZoom() {
+    // console.log("zoom!");
+    // console.log("zoom factor = " + zoom_factor)
+    let distance = videoPlayer.xr().controls3d.orbit.currentDistance;
+
+    if (distance <= 0) {
+        let currZoomFactor = Math.pow(2, -distance / 500);
+
+        for (let zz = 0; zz < zoom.zoomFactors.length; zz++) {
+            if (currZoomFactor > zoom.zoomFactors[zoom.zoomFactors.length - zz - 1]) {
+                multiplier.updateMtx(zoom.zoomMtx[zoom.zoomFactors.length - zz - 1]);
+                break;
+            }
+        }
+
+    } else {
+        multiplier.updateMtx(zoom.zoomMtx[0]);
+    }
 }
 
 function setOrderDependentVariables() {

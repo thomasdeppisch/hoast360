@@ -18,7 +18,6 @@ export default class PlaybackEventHandler {
         this.videoPlayer.bigPlayButton.hide();
         this.videoPlayer.addClass("vjs-seeking");
         this.registerEvents();
-        console.log('numActiveAudioPlayer: ' + this.numActiveAudioPlayers);
     }
 
     registerEvents() {
