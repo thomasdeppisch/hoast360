@@ -63740,9 +63740,9 @@ var Xr = /*#__PURE__*/function (_Plugin) {
   };
 
   _proto.dispose = function dispose() {
-    _Plugin.prototype.dispose.call(this);
-
     this.reset();
+
+    _Plugin.prototype.dispose.call(this);
   };
 
   _proto.polyfillVersion = function polyfillVersion() {
