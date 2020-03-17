@@ -25,6 +25,7 @@ var order,
     channelSplitters = [],
     audioSetupComplete = false,
     videoSetupComplete = false,
+    xrActive = false,
     context, channelMerger, rotator, multiplier, decoder,
     masterGain, numCh, videoPlayer, playbackEventHandler;
 
@@ -172,6 +173,9 @@ function setupVideo() {
     // this.controls3d.orbit.on( .. ) does not work for custom events!
     // view change
     vidControls.orbit.addEventListener("change", function () { 
+        if (xrActive)
+            return;
+
         rotator.updateRotationFromCamera(videoPlayer.xr().camera.matrixWorld.elements);
     });
 
@@ -187,6 +191,9 @@ function setupVideo() {
         // console.log(this.xrPose.views[0].transform.matrix);
         // console.log(this.xrPose.views[0].projectionMatrix);
 
+        if (!xrActive)
+            return;
+
         rotator.updateRotationFromCamera(this.xrPose.views[0].transform.matrix);
     });
 
@@ -195,12 +202,15 @@ function setupVideo() {
     });
 
     videoPlayer.xr().on("xrSessionActivated", function () {
+        xrActive = true;
         multiplier.bypass(true);
     });
 
     videoPlayer.xr().on("xrSessionDeactivated", function () {
+        xrActive = false;
         multiplier.bypass(false);
         updateZoom();
+        rotator.updateRotationFromCamera(this.camera.matrixWorld.elements);
     });
 
     videoSetupComplete = true;

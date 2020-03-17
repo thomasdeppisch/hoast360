@@ -63185,6 +63185,16 @@ var OrbitOrientationControls = /*#__PURE__*/function () {
     }
   };
 
+  _proto.enable = function enable() {
+    this.orbit.enabled = true;
+    if (this.orientation) this.orientation.enabled = true;
+  };
+
+  _proto.disable = function disable() {
+    this.orbit.enabled = false;
+    if (this.orientation) this.orientation.enabled = false;
+  };
+
   return OrbitOrientationControls;
 }();
 
@@ -63443,11 +63453,6 @@ videojs.registerComponent('CardboardButton', CardboardButton);
 var Plugin = videojs.getPlugin('plugin'); // Default options for the plugin.
 
 var defaults = {};
-/**
- * An advanced Video.js plugin. For more information on the API
- *
- * See: https://blog.videojs.com/feature-spotlight-advanced-plugins/
- */
 
 var Xr = /*#__PURE__*/function (_Plugin) {
   _inheritsLoose(Xr, _Plugin);
@@ -63503,46 +63508,9 @@ var Xr = /*#__PURE__*/function (_Plugin) {
       session.requestReferenceSpace('local').then(function (referenceSpace) {
         self.xrReferenceSpace = referenceSpace;
       });
-    }); // if (!this.vrDisplay) {
-    //     return;
-    // }
-    // this.vrDisplay.requestPresent([{ source: this.renderedCanvas }]).then(() => {
-    //     if (!this.vrDisplay.cardboardUI_ || !videojs.browser.IS_IOS) {
-    //         return;
-    //     }
-    //     // webvr-polyfill/cardboard ui only watches for click events
-    //     // to tell that the back arrow button is pressed during cardboard vr.
-    //     // but somewhere along the line these events are silenced with preventDefault
-    //     // but only on iOS, so we translate them ourselves here
-    //     let touches = [];
-    //     const iosCardboardTouchStart_ = (e) => {
-    //         for (let i = 0; i < e.touches.length; i++) {
-    //             touches.push(e.touches[i]);
-    //         }
-    //     };
-    //     const iosCardboardTouchEnd_ = (e) => {
-    //         if (!touches.length) {
-    //             return;
-    //         }
-    //         touches.forEach((t) => {
-    //             const simulatedClick = new window.MouseEvent('click', {
-    //                 screenX: t.screenX,
-    //                 screenY: t.screenY,
-    //                 clientX: t.clientX,
-    //                 clientY: t.clientY
-    //             });
-    //             this.renderedCanvas.dispatchEvent(simulatedClick);
-    //         });
-    //         touches = [];
-    //     };
-    //     this.renderedCanvas.addEventListener('touchstart', iosCardboardTouchStart_);
-    //     this.renderedCanvas.addEventListener('touchend', iosCardboardTouchEnd_);
-    //     this.iosRevertTouchToClick_ = () => {
-    //         this.renderedCanvas.removeEventListener('touchstart', iosCardboardTouchStart_);
-    //         this.renderedCanvas.removeEventListener('touchend', iosCardboardTouchEnd_);
-    //         this.iosRevertTouchToClick_ = null;
-    //     };
-    // });
+      self.controls3d.disable();
+      self.trigger('xrSessionActivated');
+    });
   };
 
   _proto.handleVrDisplayDeactivate_ = function handleVrDisplayDeactivate_() {
@@ -63555,13 +63523,9 @@ var Xr = /*#__PURE__*/function (_Plugin) {
 
     this.currentSession.end();
     this.currentSession = null;
-    this.xrActive = false; // if (!this.vrDisplay || !this.vrDisplay.isPresenting) {
-    //     return;
-    // }
-    // if (this.iosRevertTouchToClick_) {
-    //     this.iosRevertTouchToClick_();
-    // }
-    // this.vrDisplay.exitPresent();
+    this.xrActive = false;
+    this.controls3d.enable();
+    this.trigger('xrSessionDeactivated');
   };
 
   _proto.requestAnimationFrame = function requestAnimationFrame(fn) {
@@ -63661,29 +63625,14 @@ var Xr = /*#__PURE__*/function (_Plugin) {
       alpha: false,
       clearColor: 0xffffff,
       antialias: true
-    }); // const webglContext = this.renderer.getContext('webgl');
-    // const oldTexImage2D = webglContext.texImage2D;
-    // /* this is a workaround since threejs uses try catch */
-    // webglContext.texImage2D = (...args) => {
-    //     try {
-    //         return oldTexImage2D.apply(webglContext, args);
-    //     } catch (e) {
-    //         this.reset();
-    //         this.player_.pause();
-    //         this.triggerError_({ code: 'web-vr-hls-cors-not-supported', dismiss: false });
-    //         throw new Error(e);
-    //     }
-    // };
-    // this.vrDisplay = null;
-
+    });
     this.renderer.setSize(this.player.currentWidth(), this.player.currentHeight());
     this.renderedCanvas = this.renderer.domElement;
     this.renderedCanvas.setAttribute('style', 'width: 100%; height: 100%; position: absolute; top:0;');
     var videoElStyle = this.getVideoEl_().style;
     this.player.el().insertBefore(this.renderedCanvas, this.player.el().firstChild);
     videoElStyle.zIndex = '-1';
-    videoElStyle.opacity = '0'; //document.body.appendChild( VRButton.createButton( this.renderer, { referenceSpaceType: 'local' } ) );
-
+    videoElStyle.opacity = '0';
     this.xrActive = false;
 
     if (!this.controls3d) {
@@ -63777,12 +63726,7 @@ var Xr = /*#__PURE__*/function (_Plugin) {
 
     var videoElStyle = this.getVideoEl_().style;
     videoElStyle.zIndex = '';
-    videoElStyle.opacity = ''; // reset the ios touch to click workaround
-
-    if (this.iosRevertTouchToClick_) {
-      this.iosRevertTouchToClick_();
-    } // remove the old canvas
-
+    videoElStyle.opacity = ''; // remove the old canvas
 
     if (this.renderedCanvas) {
       this.renderedCanvas.parentNode.removeChild(this.renderedCanvas);
