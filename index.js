@@ -2,13 +2,13 @@ import $ from 'jquery';
 import * as dashjs from 'dashjs';
 import videojs from 'video.js';
 import 'videojs-contrib-dash'
-import './dependencies/videojs-vr.min.js';
-import { sceneRotator } from 'ambisonics';
+import './dependencies/videojs-xr.es.js';
 import MatrixMultiplier from './dependencies/MatrixMultiplier.js';
-import { zoom, zoomfactors } from './dependencies/zoom.js';
+import * as zoom from './dependencies/HoastZoom.js';
 import PlaybackEventHandler from './dependencies/PlaybackEventHandler.js';
 import HOASTloader from './dependencies/HoastLoader.js';
 import HOASTBinDecoder from './dependencies/HoastBinauralDecoder.js';
+import HOASTRotator from './dependencies/HoastRotator.js';
 import './css/video-js.css';
 
 "use strict";
@@ -25,8 +25,9 @@ var order,
     channelSplitters = [],
     audioSetupComplete = false,
     videoSetupComplete = false,
+    xrActive = false,
     context, channelMerger, rotator, multiplier, decoder,
-    viewAzim, viewElev, masterGain, numCh, videoPlayer, playbackEventHandler;
+    masterGain, numCh, videoPlayer, playbackEventHandler;
 
 var maxOrder = 4;
 var tracksPerAudioPlayer = 8;
@@ -55,9 +56,9 @@ export function initialize(newMediaUrl, newOrder) {
     let playerhtml = "<video-js id='videojs-player' class='video-js vjs-big-play-centered' controls preload='auto' crossorigin='anonymous' data-setup='{}'></video-js>";
     $('#playerdiv').append(playerhtml);
     videoPlayer = videojs('videojs-player');
-    videoPlayer.vr({ projection: '360' });
+    videoPlayer.xr();
     console.log(videoPlayer);
-    console.log(videoPlayer.vr());
+    console.log(videoPlayer.xr());
 
     audioSetupComplete = false;
     videoSetupComplete = false;
@@ -65,7 +66,6 @@ export function initialize(newMediaUrl, newOrder) {
     order = newOrder;
     mediaUrl = newMediaUrl;
     setOrderDependentVariables();
-    console.log('numActiveAudioPlayer: ' + numActiveAudioPlayers);
 
     videoPlayer.src({ type: 'application/dash+xml', src: mediaUrl + '/video.mpd' });
 
@@ -78,8 +78,8 @@ export function initialize(newMediaUrl, newOrder) {
         // console.log(audioPlayers[i].getVideoElement().readyState);
     }
 
-    videoPlayer.vr().on("initialized", function () {
-        console.log("vr initialized");
+    videoPlayer.xr().on("initialized", function () {
+        console.log("xr initialized");
         startSetup();
         console.log(this);
         playbackEventHandler.initialize(videoPlayer, audioPlayers, numActiveAudioPlayers);
@@ -87,10 +87,10 @@ export function initialize(newMediaUrl, newOrder) {
 }
 
 export function stop() {
-    console.log("stopping");
     playbackEventHandler.unregisterEvents();
     videoPlayer.pause();
     disconnectAudio();
+    videoPlayer.xr().dispose();
     videoPlayer.dispose();
     for (let i = 0; i < numActiveAudioPlayers; ++i)
         audioPlayers[i].reset();
@@ -115,13 +115,11 @@ function startSetup() {
 }
 
 function setupAudio() {
-    console.log("setup audio!");
-
     channelMerger = context.createChannelMerger(numCh);
     console.log(channelMerger);
 
     // initialize ambisonic rotator
-    rotator = new sceneRotator(context, order);
+    rotator = new HOASTRotator(context, order);
     console.log(rotator);
 
     // initialize matrix multiplier (for now use always 4th order as zoom matrix is in 4th order format)
@@ -164,41 +162,55 @@ function setupAudio() {
 }
 
 function setupVideo() {
-    console.log("setup video");
-    var vidControls = videoPlayer.vr().controls3d;
+    videoPlayer.xr().camera.rotation.order = 'YZX'; // in THREE Y is vertical axis! -> set to yaw-pitch-roll
+    // console.log(videoPlayer.xr().camera);
 
+    let vidControls = videoPlayer.xr().controls3d;
     vidControls.orbit.minDistance = -700;
     vidControls.orbit.maxDistance = 200;
     console.log(vidControls);
 
     // this.controls3d.orbit.on( .. ) does not work for custom events!
-    vidControls.orbit.addEventListener("change", function () { // view change
-        // console.log("change!");
-        viewAzim = this.getAzimuthalAngle() * 180 / Math.PI;
-        viewElev = -90 + this.getPolarAngle() * 180 / Math.PI;
-        // console.log(viewAzim);
-        // console.log(viewElev);
-        rotator.yaw = viewAzim;
-        rotator.pitch = viewElev;
-        rotator.updateRotMtx();
+    // view change
+    vidControls.orbit.addEventListener("change", function () { 
+        if (xrActive)
+            return;
+
+        rotator.updateRotationFromCamera(videoPlayer.xr().camera.matrixWorld.elements);
+    });
+
+    // view change if HMD is used
+    videoPlayer.xr().on("xrCameraUpdate", function () {
+        // console.log('yaw: ' + this.camera.rotation.y * 180 / Math.PI);
+        // console.log('pitch: ' + this.camera.rotation.z * 180 / Math.PI);
+        // console.log('roll: ' + this.camera.rotation.x * 180 / Math.PI);
+
+        // console.log(this.xrPose.leftViewMatrix);
+        // console.log(this.xrPose.rightViewMatrix);
+        // console.log(this.xrPose.poseModelMatrix);
+        // console.log(this.xrPose.views[0].transform.matrix);
+        // console.log(this.xrPose.views[0].projectionMatrix);
+
+        if (!xrActive)
+            return;
+
+        rotator.updateRotationFromCamera(this.xrPose.views[0].transform.matrix);
     });
 
     vidControls.orbit.addEventListener("zoom", function () { // zoom change
-        // console.log("zoom!");
-        //console.log(this.currentDistance);
-        //console.log("zoom factor = " + zoom_factor)
-        if (this.currentDistance <= 0) {
-            let zoom_factor = Math.pow(2, -this.currentDistance / 500);
+        updateZoom();
+    });
 
-            for (let zz = 0; zz < zoomfactors.length; zz++) {
-                if (zoom_factor > zoomfactors[zoomfactors.length - zz - 1]) {
-                    multiplier.updateMtx(zoom[zoomfactors.length - zz - 1]);
-                    break;
-                }
-            }
-        } else {
-            multiplier.updateMtx(zoom[0]);
-        }
+    videoPlayer.xr().on("xrSessionActivated", function () {
+        xrActive = true;
+        multiplier.bypass(true);
+    });
+
+    videoPlayer.xr().on("xrSessionDeactivated", function () {
+        xrActive = false;
+        multiplier.bypass(false);
+        updateZoom();
+        rotator.updateRotationFromCamera(this.camera.matrixWorld.elements);
     });
 
     videoSetupComplete = true;
@@ -213,6 +225,26 @@ function connectChannels() {
         }
     }
 
+}
+
+function updateZoom() {
+    // console.log("zoom!");
+    // console.log("zoom factor = " + zoom_factor)
+    let distance = videoPlayer.xr().controls3d.orbit.currentDistance;
+
+    if (distance <= 0) {
+        let currZoomFactor = Math.pow(2, -distance / 500);
+
+        for (let zz = 0; zz < zoom.zoomFactors.length; zz++) {
+            if (currZoomFactor > zoom.zoomFactors[zoom.zoomFactors.length - zz - 1]) {
+                multiplier.updateMtx(zoom.zoomMtx[zoom.zoomFactors.length - zz - 1]);
+                break;
+            }
+        }
+
+    } else {
+        multiplier.updateMtx(zoom.zoomMtx[0]);
+    }
 }
 
 function setOrderDependentVariables() {

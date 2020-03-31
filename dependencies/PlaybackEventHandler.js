@@ -18,14 +18,13 @@ export default class PlaybackEventHandler {
         this.videoPlayer.bigPlayButton.hide();
         this.videoPlayer.addClass("vjs-seeking");
         this.registerEvents();
-        console.log('numActiveAudioPlayer: ' + this.numActiveAudioPlayers);
     }
 
     registerEvents() {
         let self = this;
         this.videoPlayer.bigPlayButton.off('click');
         this.videoPlayer.controlBar.playToggle.off('click');
-        var canvControls = this.videoPlayer.vr().canvasPlayerControls;
+        var canvControls = this.videoPlayer.xr().canvasPlayerControls;
 
         canvControls.addEventListener('vrtoggleplay', function() {
             self.togglePlay();
@@ -101,7 +100,7 @@ export default class PlaybackEventHandler {
     }
 
     unregisterEvents() {
-        var canvControls = this.videoPlayer.vr().canvasPlayerControls;
+        var canvControls = this.videoPlayer.xr().canvasPlayerControls;
         canvControls.removeEventListener('vrtoggleplay');
         this.videoPlayer.controlBar.playToggle.off('click');
         this.videoPlayer.bigPlayButton.off("click");

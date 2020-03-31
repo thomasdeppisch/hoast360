@@ -29,6 +29,7 @@ export default class MatrixMultiplier {
         this.nCh = (order + 1) * (order + 1);
 
         this.mtx = numeric.identity(this.nCh);
+        this.bypassed = false;
 
         // Input and output nodes
         this.in = this.ctx.createChannelSplitter(this.nCh);
@@ -50,14 +51,26 @@ export default class MatrixMultiplier {
         }
     }
 
-
     updateMtx(mtx) {
+        if (this.bypassed)
+            return;
+
         this.mtx = mtx;
 
         for (var row = 0; row < this.nCh; row++) {       //outputs
             for (var col = 0; col < this.nCh; col++) {	   //inputs
                 this.gain[row][col].gain.value = this.mtx[row][col]; //set new gains
             }
+        }
+    }
+
+    bypass(shouldBeActive) {
+        if (shouldBeActive) {
+            this.updateMtx(numeric.identity(this.nCh));
+            this.bypassed = true;
+        }
+        else {
+            this.bypassed = false;
         }
     }
 
