@@ -9,6 +9,7 @@ import PlaybackEventHandler from './dependencies/PlaybackEventHandler.js';
 import HOASTloader from './dependencies/HoastLoader.js';
 import HOASTBinDecoder from './dependencies/HoastBinauralDecoder.js';
 import HOASTRotator from './dependencies/HoastRotator.js';
+import { checkUserAgent } from './dependencies/UserAgentChecker.js';
 import './css/video-js.css';
 
 "use strict";
@@ -39,6 +40,16 @@ var AudioContext = window.AudioContext // Default
 context = new AudioContext;
 console.log(context);
 
+var activeBrowser = checkUserAgent();
+console.log('detected ' + activeBrowser + ' browser');
+
+// Firefox <3 supports 25ch OPUS files
+if (activeBrowser === 'Firefox') {
+    tracksPerAudioPlayer = 25;
+    maxTracksPerAudioFile = 25;
+    maxNrOfAudioPlayers = Math.ceil((maxOrder + 1) * (maxOrder + 1) / tracksPerAudioPlayer);
+}
+
 playbackEventHandler = new PlaybackEventHandler(context);
 
 // create as many audio players as we need for max order
@@ -47,9 +58,12 @@ for (let i = 0; i < maxNrOfAudioPlayers; ++i) {
 
     // create sourceNodes and connect to splitters as we cannot disconnect and reuse these
     // (error: HTMLMediaElement already connected ...)
-    channelSplitters[i] = context.createChannelSplitter(maxTracksPerAudioFile);
     sourceNodes[i] = context.createMediaElementSource(audioElements[i]);
-    sourceNodes[i].connect(channelSplitters[i]);
+
+    if (maxNrOfAudioPlayers !== 1) {
+        channelSplitters[i] = context.createChannelSplitter(maxTracksPerAudioFile);
+        sourceNodes[i].connect(channelSplitters[i]);
+    }
 }
 
 export function initialize(newMediaUrl, newOrder) {
@@ -97,10 +111,13 @@ export function stop() {
 }
 
 function disconnectAudio() {
-    for (let i = 0; i < numActiveAudioPlayers; ++i) {
-        channelSplitters[i].disconnect();
+    if (numActiveAudioPlayers !== 1) {
+        for (let i = 0; i < numActiveAudioPlayers; ++i) {
+            channelSplitters[i].disconnect();
+        }
+        channelMerger.disconnect();
     }
-    channelMerger.disconnect();
+
     rotator.out.disconnect();
     multiplier.out.disconnect();
     decoder.out.disconnect();
@@ -115,9 +132,11 @@ function startSetup() {
 }
 
 function setupAudio() {
-    channelMerger = context.createChannelMerger(numCh);
-    console.log(channelMerger);
-
+    if (numActiveAudioPlayers !== 1) {
+        channelMerger = context.createChannelMerger(numCh);
+        console.log(channelMerger);
+    }
+    
     // initialize ambisonic rotator
     rotator = new HOASTRotator(context, order);
     console.log(rotator);
@@ -150,9 +169,13 @@ function setupAudio() {
         // console.log(sourceNodes[i]);
     }
 
-    connectChannels();
-
-    channelMerger.connect(rotator.in);
+    if (maxNrOfAudioPlayers === 1) {
+        sourceNodes[0].connect(rotator.in);
+    } else {
+        connectChannels();
+        channelMerger.connect(rotator.in);
+    }
+    
     rotator.out.connect(multiplier.in);
     multiplier.out.connect(decoder.in);
     decoder.out.connect(masterGain);
@@ -249,31 +272,35 @@ function updateZoom() {
 
 function setOrderDependentVariables() {
     numCh = (order + 1) * (order + 1);
+    irs = 'staticfiles/mediadb/irs/hoast_o' + order + '.wav';
+
+    if (maxNrOfAudioPlayers === 1) {
+        chCounts = [numCh];
+        chStrings = [numCh.toString() + 'ch'];
+        numActiveAudioPlayers = 1;
+        return;
+    }
 
     switch (order) {
         case 4:
             chCounts = [8, 8, 8, 1];
             chStrings = ["01-08ch", "09-16ch", "17-24ch", "25-25ch"];
             numActiveAudioPlayers = 4;
-            irs = "staticfiles/mediadb/irs/hoast_o4.wav";
             break;
         case 3:
             chCounts = [8, 8];
             chStrings = ["01-08ch", "09-16ch"];
             numActiveAudioPlayers = 2;
-            irs = "staticfiles/mediadb/irs/hoast_o3.wav";
             break;
         case 2:
             chCounts = [8, 1];
             chStrings = ["01-08ch", "09-09ch"];
             numActiveAudioPlayers = 2;
-            irs = "staticfiles/mediadb/irs/hoast_o2.wav";
             break;
         case 1:
             chCounts = [4];
             chStrings = ["01-04ch"];
             numActiveAudioPlayers = 1;
-            irs = "staticfiles/mediadb/irs/hoast_o1.wav";
             break;
         default:
             console.error("Error: Unsupported ambisonics order, choose order between 1 and 4.");

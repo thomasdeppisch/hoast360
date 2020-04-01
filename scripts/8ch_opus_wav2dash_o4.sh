@@ -28,6 +28,11 @@ ffmpeg \
     -filter 'channelmap=16|17|18|19|20|21|22|23:' -c:a libopus -b:a 512k -vn -f webm -dash 1 $outdir'/'$fn'_17-24ch.webm' \
     -filter 'channelmap=24:' -c:a libopus -b:a 64k -vn -f webm -dash 1 $outdir'/'$fn'_25-25ch.webm' \
 
+############################# 25ch version cause Firefox is awesome #############################
+ffmpeg \
+    -i '../sounds/wavs/'$fn'.wav' \
+    -c:a libopus -mapping_family 255 -b:a 1600k -vn -f webm -dash 1 $outdir'/'$fn'_25ch.webm'
+
 ############################# CREATE DASH MANIFESTS #############################
 
 ffmpeg \
@@ -45,3 +50,5 @@ ffmpeg -f webm_dash_manifest -i $outdir'/'$fn$'_01-08ch.webm' -c copy -map 0 -f 
 ffmpeg -f webm_dash_manifest -i $outdir'/'$fn$'_09-16ch.webm' -c copy -map 0 -f webm_dash_manifest -adaptation_sets 'id=0,streams=0' $outdir'/audio_09-16ch.mpd'
 ffmpeg -f webm_dash_manifest -i $outdir'/'$fn$'_17-24ch.webm' -c copy -map 0 -f webm_dash_manifest -adaptation_sets 'id=0,streams=0' $outdir'/audio_17-24ch.mpd'
 ffmpeg -f webm_dash_manifest -i $outdir'/'$fn$'_25-25ch.webm' -c copy -map 0 -f webm_dash_manifest -adaptation_sets 'id=0,streams=0' $outdir'/audio_25-25ch.mpd'
+
+ffmpeg -f webm_dash_manifest -i $outdir'/'$fn$'_25ch.webm' -c copy -map 0 -f webm_dash_manifest -adaptation_sets 'id=0,streams=0' $outdir'/audio_25ch.mpd'
