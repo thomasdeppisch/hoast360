@@ -7,6 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack -d --env.development",
     "production-build": "webpack -p --env.production",
+    "analyze-build": "webpack -p --env.analyze",
     "server": "http-server"
   },
   "repository": {

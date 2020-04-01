@@ -40,8 +40,8 @@ const config = {
 };
 
 module.exports = env => {
-    const inProduction = env.production;
-    if (inProduction)
+    const doAnalysis = env.analyze;
+    if (doAnalysis)
         config.plugins.push(new BundleAnalyzerPlugin({ analyzerPort: 8123 }));
 
     return config;
