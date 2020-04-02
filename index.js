@@ -9,62 +9,38 @@ import PlaybackEventHandler from './dependencies/PlaybackEventHandler.js';
 import HOASTloader from './dependencies/HoastLoader.js';
 import HOASTBinDecoder from './dependencies/HoastBinauralDecoder.js';
 import HOASTRotator from './dependencies/HoastRotator.js';
-import { checkUserAgent } from './dependencies/UserAgentChecker.js';
 import './css/video-js.css';
 
 "use strict";
 
 var order,
-    chCounts,
-    chStrings,
-    numActiveAudioPlayers,
+    chString,
     irs,
     mediaUrl,
-    audioElements = [],
-    audioPlayers = [],
-    sourceNodes = [],
-    channelSplitters = [],
+    audioElement,
+    audioPlayer,
+    sourceNode,
     audioSetupComplete = false,
     videoSetupComplete = false,
     xrActive = false,
-    context, channelMerger, rotator, multiplier, decoder,
+    context, rotator, multiplier, decoder,
     masterGain, numCh, videoPlayer, playbackEventHandler;
 
 var maxOrder = 4;
-var tracksPerAudioPlayer = 8;
-var maxTracksPerAudioFile = 8;
-var maxNrOfAudioPlayers = Math.ceil((maxOrder + 1) * (maxOrder + 1) / tracksPerAudioPlayer);
 
 var AudioContext = window.AudioContext // Default
     || window.webkitAudioContext; // safari
 context = new AudioContext;
 console.log(context);
 
-var activeBrowser = checkUserAgent();
-console.log('detected ' + activeBrowser + ' browser');
-
-// Firefox <3 supports 25ch OPUS files
-if (activeBrowser === 'Firefox') {
-    tracksPerAudioPlayer = 25;
-    maxTracksPerAudioFile = 25;
-    maxNrOfAudioPlayers = Math.ceil((maxOrder + 1) * (maxOrder + 1) / tracksPerAudioPlayer);
-}
-
 playbackEventHandler = new PlaybackEventHandler(context);
 
 // create as many audio players as we need for max order
-for (let i = 0; i < maxNrOfAudioPlayers; ++i) {
-    audioElements[i] = new Audio();
+audioElement = new Audio();
 
-    // create sourceNodes and connect to splitters as we cannot disconnect and reuse these
-    // (error: HTMLMediaElement already connected ...)
-    sourceNodes[i] = context.createMediaElementSource(audioElements[i]);
-
-    if (maxNrOfAudioPlayers !== 1) {
-        channelSplitters[i] = context.createChannelSplitter(maxTracksPerAudioFile);
-        sourceNodes[i].connect(channelSplitters[i]);
-    }
-}
+// create sourceNodes and connect to splitters as we cannot disconnect and reuse these
+// (error: HTMLMediaElement already connected ...)
+sourceNode = context.createMediaElementSource(audioElement);
 
 export function initialize(newMediaUrl, newOrder) {
     let playerhtml = "<video-js id='videojs-player' class='video-js vjs-big-play-centered' controls preload='auto' crossorigin='anonymous' data-setup='{}'></video-js>";
@@ -77,26 +53,25 @@ export function initialize(newMediaUrl, newOrder) {
     audioSetupComplete = false;
     videoSetupComplete = false;
 
+    if (order > maxOrder)
+        console.error('Ambisonic orders greater than 4 not supported!');
+
     order = newOrder;
     mediaUrl = newMediaUrl;
     setOrderDependentVariables();
 
     videoPlayer.src({ type: 'application/dash+xml', src: mediaUrl + '/video.mpd' });
 
-    for (let i = 0; i < numActiveAudioPlayers; ++i) {
-        audioPlayers[i] = dashjs.MediaPlayer().create();
-        audioPlayers[i].initialize(audioElements[i]);
-        audioPlayers[i].setAutoPlay(false);
-        audioPlayers[i].attachSource(mediaUrl + "/audio_" + chStrings[i] + ".mpd");
-        // console.log(audioPlayers[i]);
-        // console.log(audioPlayers[i].getVideoElement().readyState);
-    }
+    audioPlayer = dashjs.MediaPlayer().create();
+    audioPlayer.initialize(audioElement);
+    audioPlayer.setAutoPlay(false);
+    audioPlayer.attachSource(mediaUrl + "/audio_" + chString + ".mpd");
 
     videoPlayer.xr().on("initialized", function () {
         console.log("xr initialized");
         startSetup();
         console.log(this);
-        playbackEventHandler.initialize(videoPlayer, audioPlayers, numActiveAudioPlayers);
+        playbackEventHandler.initialize(videoPlayer, audioPlayer);
     });
 }
 
@@ -105,19 +80,12 @@ export function stop() {
     videoPlayer.pause();
     disconnectAudio();
     videoPlayer.xr().dispose();
-    videoPlayer.dispose();
-    for (let i = 0; i < numActiveAudioPlayers; ++i)
-        audioPlayers[i].reset();
+    videoPlayer.dispose(); // this triggers an error "failed to remove source buffer from media source", but seems to work anyway
+    audioPlayer.reset();
 }
 
 function disconnectAudio() {
-    if (numActiveAudioPlayers !== 1) {
-        for (let i = 0; i < numActiveAudioPlayers; ++i) {
-            channelSplitters[i].disconnect();
-        }
-        channelMerger.disconnect();
-    }
-
+    sourceNode.disconnect();
     rotator.out.disconnect();
     multiplier.out.disconnect();
     decoder.out.disconnect();
@@ -132,11 +100,6 @@ function startSetup() {
 }
 
 function setupAudio() {
-    if (numActiveAudioPlayers !== 1) {
-        channelMerger = context.createChannelMerger(numCh);
-        console.log(channelMerger);
-    }
-    
     // initialize ambisonic rotator
     rotator = new HOASTRotator(context, order);
     console.log(rotator);
@@ -162,20 +125,9 @@ function setupAudio() {
             masterGain.gain.value = this.volume();
     });
 
-    for (let i = 0; i < numActiveAudioPlayers; ++i) {
-        // console.log(channelSplitters[i]);
-        sourceNodes[i].channelCount = chCounts[i];
-        // console.log($("#audio_" + chStrings[i])[0]);
-        // console.log(sourceNodes[i]);
-    }
+    sourceNode.channelCount = numCh;
 
-    if (maxNrOfAudioPlayers === 1) {
-        sourceNodes[0].connect(rotator.in);
-    } else {
-        connectChannels();
-        channelMerger.connect(rotator.in);
-    }
-    
+    sourceNode.connect(rotator.in);
     rotator.out.connect(multiplier.in);
     multiplier.out.connect(decoder.in);
     decoder.out.connect(masterGain);
@@ -239,17 +191,6 @@ function setupVideo() {
     videoSetupComplete = true;
 }
 
-function connectChannels() {
-    let totalChannelCount = 0;
-    for (let i = 0; i < numActiveAudioPlayers; ++i) {
-        for (let ch = 0; ch < chCounts[i]; ++ch) {
-            channelSplitters[i].connect(channelMerger, ch, totalChannelCount);
-            ++totalChannelCount;
-        }
-    }
-
-}
-
 function updateZoom() {
     // console.log("zoom!");
     // console.log("zoom factor = " + zoom_factor)
@@ -273,37 +214,5 @@ function updateZoom() {
 function setOrderDependentVariables() {
     numCh = (order + 1) * (order + 1);
     irs = 'staticfiles/mediadb/irs/hoast_o' + order + '.wav';
-
-    if (maxNrOfAudioPlayers === 1) {
-        chCounts = [numCh];
-        chStrings = [numCh.toString() + 'ch'];
-        numActiveAudioPlayers = 1;
-        return;
-    }
-
-    switch (order) {
-        case 4:
-            chCounts = [8, 8, 8, 1];
-            chStrings = ["01-08ch", "09-16ch", "17-24ch", "25-25ch"];
-            numActiveAudioPlayers = 4;
-            break;
-        case 3:
-            chCounts = [8, 8];
-            chStrings = ["01-08ch", "09-16ch"];
-            numActiveAudioPlayers = 2;
-            break;
-        case 2:
-            chCounts = [8, 1];
-            chStrings = ["01-08ch", "09-09ch"];
-            numActiveAudioPlayers = 2;
-            break;
-        case 1:
-            chCounts = [4];
-            chStrings = ["01-04ch"];
-            numActiveAudioPlayers = 1;
-            break;
-        default:
-            console.error("Error: Unsupported ambisonics order, choose order between 1 and 4.");
-    }
-
+    chString = numCh.toString() + 'ch';
 }

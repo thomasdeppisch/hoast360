@@ -7,14 +7,13 @@ export default class PlaybackEventHandler {
         this.context = ctx;
     }
 
-    initialize(videoPlayer, audioPlayers, numActiveAudioPlayers) {
+    initialize(videoPlayer, audioPlayer) {
         this.videoPlayer = videoPlayer;
-        this.audioPlayers = audioPlayers;
+        this.audioPlayer = audioPlayer;
         this.allBuffersLoaded = false;
         this.wasPlaying = false;
         this.waitingForPlayback = false;
         this.isSeeking = false;
-        this.numActiveAudioPlayers = numActiveAudioPlayers;
         this.videoPlayer.bigPlayButton.hide();
         this.videoPlayer.addClass("vjs-seeking");
         this.registerEvents();
@@ -26,11 +25,11 @@ export default class PlaybackEventHandler {
         this.videoPlayer.controlBar.playToggle.off('click');
         var canvControls = this.videoPlayer.xr().canvasPlayerControls;
 
-        canvControls.addEventListener('vrtoggleplay', function() {
+        canvControls.addEventListener('vrtoggleplay', function () {
             self.togglePlay();
         });
 
-        this.videoPlayer.controlBar.playToggle.on('click', function() {
+        this.videoPlayer.controlBar.playToggle.on('click', function () {
             self.togglePlay();
         });
 
@@ -38,16 +37,14 @@ export default class PlaybackEventHandler {
             self.togglePlay();
         });
 
-        for (let i = 0; i < this.numActiveAudioPlayers; ++i) {
-            this.audioPlayers[i].on(dashjs.MediaPlayer.events["CAN_PLAY"], this.onAudioCanPlay, this);
-            // this.audioPlayers[i].on(dashjs.MediaPlayer.events["BUFFER_LOADED"], function () {
-            //     console.log("audio buffer loaded");
-            //     self.checkReadyStates();
-            // });
-            this.audioPlayers[i].on(dashjs.MediaPlayer.events["PLAYBACK_WAITING"], this.onAudioPlaybackWaiting, this);
-            this.audioPlayers[i].on(dashjs.MediaPlayer.events["PLAYBACK_SEEKING"], this.onAudioPlaybackSeeking, this);
-            this.audioPlayers[i].on(dashjs.MediaPlayer.events["PLAYBACK_SEEKED"], this.onAudioPlaybackSeeked, this);
-        }
+        this.audioPlayer.on(dashjs.MediaPlayer.events["CAN_PLAY"], this.onAudioCanPlay, this);
+        // this.audioPlayer.on(dashjs.MediaPlayer.events["BUFFER_LOADED"], function () {
+        //     console.log("audio buffer loaded");
+        //     self.checkReadyStates();
+        // });
+        this.audioPlayer.on(dashjs.MediaPlayer.events["PLAYBACK_WAITING"], this.onAudioPlaybackWaiting, this);
+        this.audioPlayer.on(dashjs.MediaPlayer.events["PLAYBACK_SEEKING"], this.onAudioPlaybackSeeking, this);
+        this.audioPlayer.on(dashjs.MediaPlayer.events["PLAYBACK_SEEKED"], this.onAudioPlaybackSeeked, this);
 
         this.videoPlayer.on("canplay", function () {
             self.checkReadyStates();
@@ -59,15 +56,11 @@ export default class PlaybackEventHandler {
                 console.log("resuming context");
             }
 
-            for (let i = 0; i < self.numActiveAudioPlayers; ++i) {
-                self.audioPlayers[i].play();
-            }
+            self.audioPlayer.play();
         });
 
         this.videoPlayer.on("pause", function () {
-            for (let i = 0; i < self.numActiveAudioPlayers; ++i) {
-                self.audioPlayers[i].pause();
-            }
+            self.audioPlayer.pause();
         });
 
         this.videoPlayer.on("seeking", function () {
@@ -75,12 +68,10 @@ export default class PlaybackEventHandler {
             self.startWaitingRoutine();
         });
 
-        this.videoPlayer.on("seeked", function() {
+        this.videoPlayer.on("seeked", function () {
             let currTime = this.currentTime();
-            for (let i = 0; i < self.numActiveAudioPlayers; ++i) {
-                self.audioPlayers[i].getVideoElement().currentTime = currTime; // do not use seek() method, there seems to be a bug
-                //self.audioPlayers[i].seek(currTime);
-            }
+            self.audioPlayer.getVideoElement().currentTime = currTime; // do not use seek() method, there seems to be a bug
+            //self.audioPlayer.seek(currTime);
         })
 
         this.videoPlayer.on("waiting", function () {
@@ -105,12 +96,10 @@ export default class PlaybackEventHandler {
         this.videoPlayer.controlBar.playToggle.off('click');
         this.videoPlayer.bigPlayButton.off("click");
 
-        for (let i = 0; i < this.numActiveAudioPlayers; ++i) {
-            this.audioPlayers[i].off(dashjs.MediaPlayer.events["CAN_PLAY"], this.onAudioCanPlay, this);
-            // this.audioPlayers[i].off(dashjs.MediaPlayer.events["BUFFER_LOADED"]);
-            this.audioPlayers[i].off(dashjs.MediaPlayer.events["PLAYBACK_WAITING"], this.onAudioPlaybackWaiting, this);
-            this.audioPlayers[i].off(dashjs.MediaPlayer.events["PLAYBACK_SEEKING"], this.onAudioPlaybackSeeking, this);
-        }
+        this.audioPlayer.off(dashjs.MediaPlayer.events["CAN_PLAY"], this.onAudioCanPlay, this);
+        // this.audioPlayer.off(dashjs.MediaPlayer.events["BUFFER_LOADED"]);
+        this.audioPlayer.off(dashjs.MediaPlayer.events["PLAYBACK_WAITING"], this.onAudioPlaybackWaiting, this);
+        this.audioPlayer.off(dashjs.MediaPlayer.events["PLAYBACK_SEEKING"], this.onAudioPlaybackSeeking, this);
 
         this.videoPlayer.off("canplay");
         this.videoPlayer.off("play");
@@ -130,21 +119,14 @@ export default class PlaybackEventHandler {
         this.startWaitingRoutine();
     }
 
-    onAudioPlaybackSeeking () {
+    onAudioPlaybackSeeking() {
         this.startWaitingRoutine();
     }
 
-    onAudioPlaybackSeeked () {
-        // let firstSeekTime = this.audioPlayers[0].time();
-        for (let i = 0; i < this.numActiveAudioPlayers; ++i) {
-            if (this.audioPlayers[i].isSeeking())
-                return;
+    onAudioPlaybackSeeked() {
+        if (this.audioPlayer.isSeeking())
+            return;
 
-            // if (this.audioPlayers[i].time() !== firstSeekTime) {
-            //     this.audioPlayers[i].seek(firstSeekTime)
-            //     return;
-            // }
-        }
         this.isSeeking = false;
         this.checkReadyStates();
     }
@@ -154,9 +136,7 @@ export default class PlaybackEventHandler {
             this.waitingForPlayback = true;
             this.videoPlayer.pause();
             this.videoPlayer.addClass("vjs-seeking"); // show loading spinner
-            for (let i = 0; i < this.numActiveAudioPlayers; ++i) {
-                this.audioPlayers[i].pause();
-            }
+            this.audioPlayer.pause();
         }
     }
 
@@ -201,10 +181,9 @@ export default class PlaybackEventHandler {
     }
 
     isAudioReady() {
-        for (let i = 0; i < this.numActiveAudioPlayers; ++i) {
-            if (this.audioPlayers[i].getVideoElement().readyState < 3)
-                return false;
-        }
+        if (this.audioPlayer.getVideoElement().readyState < 3)
+            return false;
+
         return true;
     }
 
@@ -213,4 +192,4 @@ export default class PlaybackEventHandler {
         this.checkReadyStates();
     }
 
-  }
+}
