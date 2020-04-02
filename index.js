@@ -45,7 +45,9 @@ sourceNode = context.createMediaElementSource(audioElement);
 export function initialize(newMediaUrl, newOrder) {
     let playerhtml = "<video-js id='videojs-player' class='video-js vjs-big-play-centered' controls preload='auto' crossorigin='anonymous' data-setup='{}'></video-js>";
     $('#playerdiv').append(playerhtml);
-    videoPlayer = videojs('videojs-player');
+    videoPlayer = videojs('videojs-player', {
+        html5: {nativeCaptions: false}
+    });
     videoPlayer.xr();
     console.log(videoPlayer);
     console.log(videoPlayer.xr());
