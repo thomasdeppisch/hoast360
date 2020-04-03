@@ -27,6 +27,7 @@ var order,
     masterGain, numCh, videoPlayer, playbackEventHandler;
 
 var maxOrder = 4;
+var opusSupport = true;
 
 var AudioContext = window.AudioContext // Default
     || window.webkitAudioContext; // safari
@@ -37,10 +38,17 @@ playbackEventHandler = new PlaybackEventHandler(context);
 
 // create as many audio players as we need for max order
 audioElement = new Audio();
+checkOpusSupport();
 
 // create sourceNodes and connect to splitters as we cannot disconnect and reuse these
 // (error: HTMLMediaElement already connected ...)
 sourceNode = context.createMediaElementSource(audioElement);
+
+function checkOpusSupport() {
+    if (audioElement.canPlayType('audio/ogg; codecs="opus"') === '') {
+        opusSupport = false;
+    }
+}
 
 export function initialize(newMediaUrl, newOrder) {
     let playerhtml = "<video-js id='videojs-player' class='video-js vjs-big-play-centered' controls preload='auto' crossorigin='anonymous' data-setup='{}'></video-js>";
@@ -48,6 +56,12 @@ export function initialize(newMediaUrl, newOrder) {
     videoPlayer = videojs('videojs-player', {
         html5: {nativeCaptions: false}
     });
+
+    if (!opusSupport) {
+        videoPlayer.error('Error: Your browser does not support the OPUS audio codec. Please use Firefox or Chrome-based browsers.');
+        return;
+    }
+
     videoPlayer.xr();
     console.log(videoPlayer);
     console.log(videoPlayer.xr());
@@ -78,6 +92,11 @@ export function initialize(newMediaUrl, newOrder) {
 }
 
 export function stop() {
+    if (!opusSupport) {
+        videoPlayer.dispose();
+        return;
+    }
+
     playbackEventHandler.unregisterEvents();
     videoPlayer.pause();
     disconnectAudio();
