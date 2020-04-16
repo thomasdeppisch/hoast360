@@ -126,6 +126,8 @@ figure {
 #videojs-player {
   display: block;
   margin: auto;
+  width: 800px;
+  height: 400px;
 }
 
 .vjs-picture-in-picture-control {

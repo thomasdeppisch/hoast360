@@ -3,6 +3,7 @@ sounds/*
 videos/*
 dependencies/videojs-vr/
 media/
+live/
 node_modules/*
 *.pem
 *.wav
