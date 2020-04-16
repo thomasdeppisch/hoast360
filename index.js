@@ -14,7 +14,6 @@ import './css/video-js.css';
 "use strict";
 
 var order,
-    chString,
     irs,
     mediaUrl,
     audioElement,
@@ -81,7 +80,7 @@ export function initialize(newMediaUrl, newOrder) {
     audioPlayer = dashjs.MediaPlayer().create();
     audioPlayer.initialize(audioElement);
     audioPlayer.setAutoPlay(false);
-    audioPlayer.attachSource(mediaUrl + "/audio_" + chString + ".mpd");
+    audioPlayer.attachSource(mediaUrl + "/audio.mpd");
 
     videoPlayer.xr().on("initialized", function () {
         console.log("xr initialized");
@@ -235,5 +234,4 @@ function updateZoom() {
 function setOrderDependentVariables() {
     numCh = (order + 1) * (order + 1);
     irs = 'staticfiles/mediadb/irs/hoast_o' + order + '.wav';
-    chString = numCh.toString() + 'ch';
 }
