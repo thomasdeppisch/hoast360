@@ -53,7 +53,8 @@ export function initialize(newMediaUrl, newOrder) {
     let playerhtml = "<video-js id='videojs-player' class='video-js vjs-big-play-centered' controls preload='auto' crossorigin='anonymous' data-setup='{}'></video-js>";
     $('#playerdiv').append(playerhtml);
     videoPlayer = videojs('videojs-player', {
-        html5: {nativeCaptions: false}
+        html5: {nativeCaptions: false},
+        liveui: true
     });
 
     if (!opusSupport) {
