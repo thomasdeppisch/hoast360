@@ -4,7 +4,7 @@ import videojs from 'video.js';
 import 'videojs-contrib-dash'
 import './dependencies/videojs-xr.es.js';
 import MatrixMultiplier from './dependencies/MatrixMultiplier.js';
-import * as zoom from './dependencies/HoastZoom.js';
+import { zoomMtx, stepsize, minZoomfactor, maxZoomfactor } from './dependencies/HoastZoom.js';
 import PlaybackEventHandler from './dependencies/PlaybackEventHandler.js';
 import HOASTloader from './dependencies/HoastLoader.js';
 import HOASTBinDecoder from './dependencies/HoastBinauralDecoder.js';
@@ -27,6 +27,8 @@ var order,
 
 var maxOrder = 4;
 var opusSupport = true;
+
+var zoomIndex = 1; 
 
 var AudioContext = window.AudioContext // Default
     || window.webkitAudioContext; // safari
@@ -213,23 +215,19 @@ function setupVideo() {
 }
 
 function updateZoom() {
-    // console.log("zoom!");
-    // console.log("zoom factor = " + zoom_factor)
-    let distance = videoPlayer.xr().controls3d.orbit.currentDistance;
 
-    if (distance <= 0) {
-        let currZoomFactor = Math.pow(2, -distance / 500);
+    let currentDistance = videoPlayer.xr().controls3d.orbit.currentDistance;
+	let minDistance = videoPlayer.xr().controls3d.orbit.minDistance;
 
-        for (let zz = 0; zz < zoom.zoomFactors.length; zz++) {
-            if (currZoomFactor > zoom.zoomFactors[zoom.zoomFactors.length - zz - 1]) {
-                multiplier.updateMtx(zoom.zoomMtx[zoom.zoomFactors.length - zz - 1]);
-                break;
-            }
+	let zoomFactor = (minDistance + currentDistance ) / minDistance; 
+        if (zoomFactor >= minZoomfactor && zoomFactor <= maxZoomfactor) {
+			let newZoomIndex = Math.round( ( zoomFactor - minZoomfactor ) / stepsize); 
+			if(newZoomIndex!= zoomIndex) {
+				multiplier.updateMtx(zoomMtx[newZoomIndex]);   
+				zoomIndex = newZoomIndex; 
+			}
         }
 
-    } else {
-        multiplier.updateMtx(zoom.zoomMtx[0]);
-    }
 }
 
 function setOrderDependentVariables() {
