@@ -230,6 +230,8 @@ function updateZoom() {
 }
 
 function setOrderDependentVariables() {
+    var getUrl = window.location;
+    var base_url = getUrl.protocol + "//" + getUrl.host + "/"
     numCh = (order + 1) * (order + 1);
-    irs = 'staticfiles/mediadb/irs/hoast_o' + order + '.wav';
+    irs = base_url + 'staticfiles/mediadb/irs/hoast_o' + order + '.wav';
 }
