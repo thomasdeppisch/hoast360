@@ -28,7 +28,7 @@ var order,
 var maxOrder = 4;
 var opusSupport = true;
 
-var zoomIndex = 1; 
+var zoomIndex = 1;
 
 var AudioContext = window.AudioContext // Default
     || window.webkitAudioContext; // safari
@@ -55,7 +55,7 @@ export function initialize(newMediaUrl, newOrder) {
     let playerhtml = "<video-js id='videojs-player' class='video-js vjs-big-play-centered' controls preload='auto' crossorigin='anonymous' data-setup='{}'></video-js>";
     $('#playerdiv').append(playerhtml);
     videoPlayer = videojs('videojs-player', {
-        html5: {nativeCaptions: false},
+        html5: { nativeCaptions: false },
         liveui: true
     });
 
@@ -170,7 +170,7 @@ function setupVideo() {
 
     // this.controls3d.orbit.on( .. ) does not work for custom events!
     // view change
-    vidControls.orbit.addEventListener("change", function () { 
+    vidControls.orbit.addEventListener("change", function () {
         if (xrActive)
             return;
 
@@ -217,17 +217,16 @@ function setupVideo() {
 function updateZoom() {
 
     let currentDistance = videoPlayer.xr().controls3d.orbit.currentDistance;
-	let minDistance = videoPlayer.xr().controls3d.orbit.minDistance;
+    let minDistance = videoPlayer.xr().controls3d.orbit.minDistance;
 
-	let zoomFactor = (minDistance + currentDistance ) / minDistance; 
-        if (zoomFactor >= minZoomfactor && zoomFactor <= maxZoomfactor) {
-			let newZoomIndex = Math.round( ( zoomFactor - minZoomfactor ) / stepsize); 
-			if(newZoomIndex!= zoomIndex) {
-				multiplier.updateMtx(zoomMtx[newZoomIndex]);   
-				zoomIndex = newZoomIndex; 
-			}
+    let zoomFactor = (minDistance + currentDistance) / minDistance;
+    if (zoomFactor >= minZoomfactor && zoomFactor <= maxZoomfactor) {
+        let newZoomIndex = Math.round((zoomFactor - minZoomfactor) / stepsize);
+        if (newZoomIndex != zoomIndex) {
+            multiplier.updateMtx(zoomMtx[newZoomIndex]);
+            zoomIndex = newZoomIndex;
         }
-
+    }
 }
 
 function setOrderDependentVariables() {
