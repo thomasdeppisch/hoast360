@@ -31,7 +31,7 @@
     "webpack-cli": "^3.3.10"
   },
   "dependencies": {
-    "dashjs": "^3.0.1",
+    "dashjs": "^3.1.0",
     "jquery": "^3.4.1",
     "numeric": "^1.2.6",
     "spherical-harmonic-transform": "^0.1.1",
