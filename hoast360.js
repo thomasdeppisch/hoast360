@@ -100,7 +100,7 @@ export function stop() {
         return;
     }
 
-    playbackEventHandler.unregisterEvents();
+    // playbackEventHandler.unregisterEvents();
     videoPlayer.pause();
     disconnectAudio();
     videoPlayer.xr().reset();

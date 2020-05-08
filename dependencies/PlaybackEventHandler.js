@@ -5,6 +5,7 @@ export default class PlaybackEventHandler {
 
     constructor(ctx) {
         this.context = ctx;
+        this.eventsRegistered = false;
     }
 
     initialize(videoPlayer, audioPlayer) {
@@ -16,7 +17,9 @@ export default class PlaybackEventHandler {
         this.isSeeking = false;
         this.videoPlayer.bigPlayButton.hide();
         this.videoPlayer.addClass("vjs-seeking");
-        this.registerEvents();
+
+        if (!this.eventsRegistered)
+            this.registerEvents();
     }
 
     registerEvents() {
@@ -88,9 +91,14 @@ export default class PlaybackEventHandler {
         // this.videoPlayer.on("loadeddata", function () {
         //     console.log("loaded video data");
         // });
+
+        this.eventsRegistered = true;
     }
 
     unregisterEvents() {
+        if (!this.eventsRegistered)
+            return;
+
         var canvControls = this.videoPlayer.xr().canvasPlayerControls;
         canvControls.removeEventListener('vrtoggleplay');
         this.videoPlayer.controlBar.playToggle.off('click');
@@ -109,6 +117,8 @@ export default class PlaybackEventHandler {
         this.videoPlayer.off("waiting");
         // this.videoPlayer.off("playing");
         // this.videoPlayer.off("loadeddata");
+
+        this.eventsRegistered = false;
     }
 
     onAudioCanPlay() {
