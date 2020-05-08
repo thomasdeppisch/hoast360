@@ -52,14 +52,14 @@ function checkOpusSupport() {
     }
 }
 
-export function initialize(newMediaUrl, newOrder) {
-    let playerhtml = "<video-js id='videojs-player' class='video-js vjs-big-play-centered' controls preload='auto' crossorigin='anonymous' data-setup='{}'></video-js>";
-    $('#playerdiv').append(playerhtml);
-    videoPlayer = videojs('videojs-player', {
-        html5: { nativeCaptions: false },
-        liveui: true
-    });
+let playerhtml = "<video-js id='videojs-player' class='video-js vjs-big-play-centered' controls preload='auto' crossorigin='anonymous' data-setup='{}'></video-js>";
+$('#playerdiv').append(playerhtml);
+videoPlayer = videojs('videojs-player', {
+    html5: { nativeCaptions: false },
+    liveui: true
+});
 
+export function initialize(newMediaUrl, newOrder) {
     if (!opusSupport) {
         videoPlayer.error('Error: Your browser does not support the OPUS audio codec. Please use Firefox or Chrome-based browsers.');
         return;
