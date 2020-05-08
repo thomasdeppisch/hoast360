@@ -2,7 +2,7 @@ var webpack = require('webpack');
 var BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 const config = {
-    entry: './index.js',
+    entry: './hoast360.js',
     output: {
         filename: 'hoast360.bundle.js',
         library: 'hoast360',
