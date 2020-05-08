@@ -2,7 +2,7 @@ import $ from 'jquery';
 import * as dashjs from 'dashjs';
 import videojs from 'video.js';
 import 'videojs-contrib-dash'
-import './dependencies/videojs-xr.es.js';
+import 'videojs-xr';
 import MatrixMultiplier from './dependencies/MatrixMultiplier.js';
 import { zoomMtx, stepsize, minZoomfactor, maxZoomfactor } from './dependencies/HoastZoom.js';
 import PlaybackEventHandler from './dependencies/PlaybackEventHandler.js';
