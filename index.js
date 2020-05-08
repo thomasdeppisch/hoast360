@@ -95,15 +95,15 @@ export function initialize(newMediaUrl, newOrder) {
 
 export function stop() {
     if (!opusSupport) {
-        videoPlayer.dispose();
+        videoPlayer.reset();
         return;
     }
 
     playbackEventHandler.unregisterEvents();
     videoPlayer.pause();
     disconnectAudio();
-    videoPlayer.xr().dispose();
-    videoPlayer.dispose(); // this triggers an error "failed to remove source buffer from media source", but seems to work anyway
+    videoPlayer.xr().reset();
+    videoPlayer.reset(); // this triggers an error "failed to remove source buffer from media source", but seems to work anyway
     audioPlayer.reset();
 }
 
