@@ -1,0 +1,42 @@
+{
+  "name": "hoast-player",
+  "version": "1.0.0",
+  "description": "360 degree video player with dynamic binaural higher-order ambisonics rendering, depending on view direction and zoom factor.",
+  "main": "hoast360.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack -d --env.development",
+    "production-build": "webpack -p --env.production",
+    "analyze-build": "webpack -p --env.analyze",
+    "start": "http-server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@git.iem.at:hoast/hoast-player.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.9.6",
+    "@babel/preset-env": "^7.9.6",
+    "babel-loader": "^8.1.0",
+    "css-loader": "^3.5.3",
+    "eslint": "^6.8.0",
+    "eslint-loader": "^3.0.4",
+    "http-server": "^0.12.3",
+    "raw-loader": "^4.0.1",
+    "style-loader": "^1.2.1",
+    "webpack": "^4.43.0",
+    "webpack-bundle-analyzer": "^3.7.0",
+    "webpack-cli": "^3.3.11"
+  },
+  "dependencies": {
+    "dashjs": "^3.1.0",
+    "jquery": "^3.5.1",
+    "numeric": "^1.2.6",
+    "spherical-harmonic-transform": "^0.1.1",
+    "video.js": "^7.7.6",
+    "videojs-contrib-dash": "^2.11.0",
+    "videojs-xr": "0.0.1"
+  }
+}

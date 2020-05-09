@@ -3,3 +3,13 @@ sounds/*
 videos/*
 dependencies/videojs-vr/
 media/
+live/
+node_modules/*
+*.pem
+*.wav
+*.webm
+*.opus
+*.mpd
+*.m4v
+webm_media/
+*.reapeaks

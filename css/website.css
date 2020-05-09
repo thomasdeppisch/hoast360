@@ -46,7 +46,7 @@ h1 {
 
 #headers::after {
   content: "";
-  background-image: url("img/shs_o4.jpg");
+  background-image: url("../img/shs_o4.jpg");
   background-size: 320px;
   background-repeat: no-repeat;
   background-position: 50% 30px;
@@ -121,13 +121,9 @@ figure {
   box-shadow: 0 0 2px 1px rgba(0, 140, 186, 0.5);
 }
 
-/*--------------------------    PLAYER    ------------------------------------*/
-
 #videojs-player {
   display: block;
   margin: auto;
-}
-
-.vjs-picture-in-picture-control {
-  display: none !important;
+  width: 800px;
+  height: 400px;
 }
