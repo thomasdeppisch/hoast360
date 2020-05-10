@@ -19,6 +19,7 @@ export class HOAST360 {
         this.order = 0;
         this.irs = '';
         this.mediaUrl = '';
+        this.irUrl = '';
         this.audioPlayer = null;
         this.sourceNode = null;
         this.audioSetupComplete = false;
@@ -59,7 +60,7 @@ export class HOAST360 {
         });
     }
 
-    initialize(newMediaUrl, newOrder) {
+    initialize(newMediaUrl, newIrUrl, newOrder) {
         if (!this.opusSupport) {
             this.videoPlayer.error('Error: Your browser does not support the OPUS audio codec. Please use Firefox or Chrome-based browsers.');
             return;
@@ -77,6 +78,7 @@ export class HOAST360 {
 
         this.order = newOrder;
         this.mediaUrl = newMediaUrl;
+        this.irUrl = newIrUrl;
         this._setOrderDependentVariables();
 
         this.videoPlayer.src({ type: 'application/dash+xml', src: this.mediaUrl + 'video.mpd' });
@@ -221,6 +223,6 @@ export class HOAST360 {
         let getUrl = window.location;
         let base_url = getUrl.protocol + "//" + getUrl.host + "/"
         this.numCh = (this.order + 1) * (this.order + 1);
-        this.irs = base_url + 'staticfiles/mediadb/irs/hoast_o' + this.order + '.wav';
+        this.irs = base_url + this.irUrl + 'hoast_o' + this.order + '.wav';
     }
 }
