@@ -35,11 +35,12 @@
 
     <script src="./dist/hoast360.bundle.js"></script>
     <script>
+        var hoast360 = new HOAST360();
         $("#start1").click(function () {
-            hoast360.initialize("webm_media/2015_VokalTotal/", 4);
+            hoast360.initialize("media/2015_VokalTotal_o4/", 4);
         });
         $("#start2").click(function () {
-            hoast360.initialize("webm_media/hoast_analyzer/", 4);
+            hoast360.initialize("media/hoast_demo_o4/", 4);
         });
         $("#stop").click(function () {
             hoast360.stop();

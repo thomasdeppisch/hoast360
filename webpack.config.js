@@ -5,8 +5,7 @@ const config = {
     entry: './hoast360.js',
     output: {
         filename: 'hoast360.bundle.js',
-        library: 'hoast360',
-        libraryTarget: 'var' // import via <script>
+        libraryTarget: 'umd'
     },
     module: {
         rules: [
