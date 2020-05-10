@@ -94,7 +94,7 @@ export class HOAST360 {
         });
     }
 
-    stop() {
+    reset() {
         if (!this.opusSupport) {
             this.videoPlayer.reset();
             return;
