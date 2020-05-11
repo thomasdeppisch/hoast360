@@ -30,7 +30,7 @@ if [ "$vidfn" == "" ]; then
 fi
 
 ############################# create thumbnail image #############################
-ffmpeg -ss 00:00:02 -i '../videos/'$vidfn -vframes 1 -s 360x270 -q:v 5 $outdir'/'$outfn'.jpg'
+ffmpeg -ss 00:00:02 -i '../videos/'$vidfn -vframes 1 -s 360x270 -q:v 5 $outdir'/thumbnail.jpg'
 
 ############################# create scaled videos #############################
 ffmpeg -i '../videos/'$vidfn -r 25 -c:v libvpx-vp9 -s 360x180 -b:v 500k -keyint_min 150 -g 150 -speed 1 -tile-columns 4 -frame-parallel 1 -an -f webm -dash 1 $outdir'/'$outfn'_360_500k.webm'
