@@ -29,7 +29,7 @@ if [ "$vidfn" == "" ]; then
     ffmpeg -i '../videos/orig_'$vidfn -i kug-iem-equirect.png -filter_complex "[0:v][1:v] overlay=0:0" '../videos/'$vidfn
 fi
 
-# copy once to get rid off spherical metadata which prevents playback in Chrome
+# copy once to get rid of spherical metadata which prevents playback in Chrome
 mv '../videos/'$vidfn '../videos/orig_'$vidfn
 ffmpeg -i '../videos/orig_'$vidfn -c:v copy '../videos/'$vidfn
 
