@@ -31,7 +31,7 @@ fi
 
 # copy once to get rid of spherical metadata which prevents playback in Chrome
 mv '../videos/'$vidfn '../videos/orig_'$vidfn
-ffmpeg -i '../videos/orig_'$vidfn -c:v copy '../videos/'$vidfn
+ffmpeg -i '../videos/orig_'$vidfn -c:v copy -an '../videos/'$vidfn
 
 ############################# create thumbnail image #############################
 ffmpeg -ss 00:00:02 -i '../videos/'$vidfn -vframes 1 -s 360x270 -q:v 5 $outdir'/thumbnail.jpg'
