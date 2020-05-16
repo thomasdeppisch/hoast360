@@ -1,7 +1,10 @@
 import $ from 'jquery';
 import * as dashjs from 'dashjs';
 import videojs from 'video.js';
-import 'videojs-contrib-dash'
+import './dependencies/http-streaming-master/dist/videojs-http-streaming.es.js';
+// import 'videojs-contrib-dash'
+import 'videojs-http-source-selector';
+import 'videojs-contrib-quality-levels';
 import 'videojs-xr';
 import MatrixMultiplier from './dependencies/MatrixMultiplier.js';
 import { zoomMtx, stepsize, minZoomfactor, maxZoomfactor } from './dependencies/HoastZoom.js';
@@ -56,7 +59,10 @@ export class HOAST360 {
         $('#playerdiv').append(playerhtml);
         this.videoPlayer = videojs('videojs-player', {
             html5: { nativeCaptions: false },
-            liveui: true
+            liveui: true,
+            plugins: {
+                httpSourceSelector: { default: 'auto' }
+            }
         });
     }
 

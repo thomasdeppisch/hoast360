@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>HOAST360</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link rel="shortcut icon" type="image/jpg" href="img/favicon.jpg" />
+
+    <link href="//vjs.zencdn.net/7.7.6/video-js.min.css" rel="stylesheet">
+    <script src="//vjs.zencdn.net/7.7.6/video.js"></script>
+    <!-- <link rel="stylesheet" type="text/css" href="./css/hoast360.css"> -->
+
+
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+        integrity="sha256-pasqAKBDmFT4eHoN2ndd6lN370kFiGUFyTiUHWhU7k8=" crossorigin="anonymous"></script>
+
+    <script src="./dependencies/http-streaming-master/dist/videojs-http-streaming.js"></script>
+    <!-- <script src="http://cdn.dashjs.org/v3.1.0/dash.all.debug.js"></script> -->
+    <!-- <script src="./node_modules/videojs-contrib-dash/dist/videojs-dash.js"></script> -->
+    <script src="./node_modules/videojs-contrib-quality-levels/dist/videojs-contrib-quality-levels.js"></script>
+    <script src="./node_modules/videojs-http-source-selector/dist/videojs-http-source-selector.js"></script>
+    <script src="./node_modules/videojs-xr/dist/videojs-xr.js"></script>
+    <link rel="stylesheet" type="text/css" href="./node_modules//videojs-http-source-selector/dist/videojs-http-source-selector.css">
+
+</head>
+
+<body>
+
+    <video-js id='videojs-player' controls preload='auto'
+        width='800' height='400' crossorigin="anonymous" data-setup='{}'>
+        <p class='vjs-no-js'>
+            To view this video please enable JavaScript, and consider upgrading to a web browser that
+            <a href='https://videojs.com/html5-video-support/' target='_blank'>supports HTML5 video</a>
+        </p>
+    </video-js>
+
+    <script>
+        var videoPlayer = videojs('videojs-player', {
+            plugins: {
+                httpSourceSelector: { default: 'auto' }
+            }
+        });
+
+        videoPlayer.xr();
+
+        // videoPlayer.qualityLevels();
+        // videoPlayer.httpSourceSelector();
+
+        videoPlayer.src({ type: 'application/dash+xml', src: 'https://dash.akamaized.net/dash264/TestCasesVP9/vp9-hd/sintel-vp9-hd.mpd' });
+        
+    </script>
+
+
+
+</body>
+
+</html>
