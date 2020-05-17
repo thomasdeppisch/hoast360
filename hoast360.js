@@ -1,8 +1,7 @@
 import $ from 'jquery';
 import * as dashjs from 'dashjs';
 import videojs from 'video.js';
-import './dependencies/http-streaming-master/dist/videojs-http-streaming.es.js';
-// import 'videojs-contrib-dash'
+import 'videojs-contrib-dash'
 import 'videojs-http-source-selector';
 import 'videojs-contrib-quality-levels';
 import 'videojs-xr';
