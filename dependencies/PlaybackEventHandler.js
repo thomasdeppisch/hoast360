@@ -22,6 +22,10 @@ export default class PlaybackEventHandler {
             this.registerEvents();
     }
 
+    reset() {
+        this.unregisterEvents();
+    }
+
     registerEvents() {
         let self = this;
         this.videoPlayer.bigPlayButton.off('click');
@@ -41,10 +45,7 @@ export default class PlaybackEventHandler {
         });
 
         this.audioPlayer.on(dashjs.MediaPlayer.events["CAN_PLAY"], this.onAudioCanPlay, this);
-        // this.audioPlayer.on(dashjs.MediaPlayer.events["BUFFER_LOADED"], function () {
-        //     console.log("audio buffer loaded");
-        //     self.checkReadyStates();
-        // });
+        // this.audioPlayer.on(dashjs.MediaPlayer.events["BUFFER_LOADED"], this.onAudioCanPlay, this);
         this.audioPlayer.on(dashjs.MediaPlayer.events["PLAYBACK_WAITING"], this.onAudioPlaybackWaiting, this);
         this.audioPlayer.on(dashjs.MediaPlayer.events["PLAYBACK_SEEKING"], this.onAudioPlaybackSeeking, this);
         this.audioPlayer.on(dashjs.MediaPlayer.events["PLAYBACK_SEEKED"], this.onAudioPlaybackSeeked, this);
@@ -105,7 +106,7 @@ export default class PlaybackEventHandler {
         this.videoPlayer.bigPlayButton.off("click");
 
         this.audioPlayer.off(dashjs.MediaPlayer.events["CAN_PLAY"], this.onAudioCanPlay, this);
-        // this.audioPlayer.off(dashjs.MediaPlayer.events["BUFFER_LOADED"]);
+        // this.audioPlayer.off(dashjs.MediaPlayer.events["BUFFER_LOADED"], this.onAudioCanPlay, this);
         this.audioPlayer.off(dashjs.MediaPlayer.events["PLAYBACK_WAITING"], this.onAudioPlaybackWaiting, this);
         this.audioPlayer.off(dashjs.MediaPlayer.events["PLAYBACK_SEEKING"], this.onAudioPlaybackSeeking, this);
 
