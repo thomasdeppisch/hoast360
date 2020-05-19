@@ -92,7 +92,7 @@ export class HOAST360 {
         this.audioPlayer.initialize(this.audioElement);
         this.audioPlayer.setAutoPlay(false);
         this.audioPlayer.attachSource(this.mediaUrl + "audio.mpd");
-        var scope = this;
+        let scope = this;
 
         this.videoPlayer.xr().on("initialized", function () {
             console.log("xr initialized");
@@ -132,6 +132,8 @@ export class HOAST360 {
     }
 
     _setupAudio() {
+        let scope = this;
+
         // initialize ambisonic rotator
         this.rotator = new HOASTRotator(this.context, this.order);
         console.log(this.rotator);
@@ -153,8 +155,13 @@ export class HOAST360 {
         this.masterGain.gain.value = 1.0;
 
         this.videoPlayer.on("volumechange", function () {
-            if (this.masterGain)
-                this.masterGain.gain.value = this.volume();
+            if (!scope.masterGain)
+                return;
+
+            if (this.muted())
+                scope.masterGain.gain.value = 0;
+            else
+                scope.masterGain.gain.value = this.volume();
         });
 
         this.sourceNode.channelCount = this.numCh;
@@ -173,9 +180,8 @@ export class HOAST360 {
         let vidControls = this.videoPlayer.xr().controls3d;
         vidControls.orbit.minDistance = -700;
         vidControls.orbit.maxDistance = 200;
-        console.log(vidControls);
 
-        var scope = this;
+        let scope = this;
         // this.controls3d.orbit.on( .. ) does not work for custom events!
         // view change
         vidControls.orbit.addEventListener("change", function () {
