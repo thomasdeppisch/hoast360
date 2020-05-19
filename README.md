@@ -1,33 +1,79 @@
-# hoast360
+# HOAST360
 
-360 degree video player with dynamic binaural higher-order ambisonics rendering, depending on view direction and zoom factor.
+HOAST360 is the open-source, higher-order Ambisonics, 360° video player with acoustic zoom. HOAST360 dynamically outputs a binaural audio stream from up to fourth-order Ambisonics audio content.  
+You can try out HOAST360 at the [HOAST Library](https://hoast.iem.at).
 
-This is still a work-in-progress.
+Technical details are explained in an AES eBrief (link tba).
 
 ----------
+### Manipulate the Field-Of-View (FOV)
+HOAST360 provides two ways to manipulate the audio-visual FOV. Drag on the video canvas with your mouse to rotate the FOV. Use your mouse wheel to zoom in and out, visually as well as acoustically. HOAST360 directly outputs a binaural audio stream, expecting the listener to **_wear headphones_**!
 
+### VR Ready
+HOAST360 supports HMDs via the WebXR Device API and an XR polyfill. This will work in recent versions of Firefox and Chromium-based (Chrome, Opera, Edge, ...) browsers. When an HMD is detected, HOAST360 automatically displays a small VR-toggle in the lower right to activate the XR environment.
 
-### file preparations
+For Chromium-based browsers the following flags must be set via chrome://flags for WebXR to work:
+ - enable #webxr
+ - set the correct runtime via #webxr-runtime
+ - disable #xr-sandbox
 
-MPEG DASH streaming, use of the Web Audio API and higher-order Ambisonic processing require the following file properties:
+### Using HOAST360
+Simply import the current HOAST360 bundle from the 'dist/' folder via a script tag and initialize it with the path to your media folder, the path to the decoding filters, and the Ambisonics order. You can find the decoding filters in this repository under 'irs/'. The media folder has to contain two separate DASH manifest files, called 'video.mpd' and 'audio.mpd', respectively, see below for codec details. Ambisonic orders 1 to 4 are supported.
+```html
+<script src="//path/to/hoast360.bundle.js"></script>
+<script>
+    var hoast360 = new HOAST360();
+    var ambisonicsOrder = 4;
+    hoast360.initialize("./path/to/media/", "./path/to/irs/", ambisonicsOrder);
+</script>
+```
+Whenever you want to load a new source, make sure to reset HOAST360 using
+```html
+    hoast360.reset();
+```
+before initializing with the new media path like above.
 
- - video encoding: h264 codec, mp4 container
- - audio encoding: aac coded, m4a container
- - Ambisonics content: ambix standard, maximum 4th order
- - audio files need to be split into 8 channel files using the naming convention below, with the 4th channel empty (thanks to aac 7.1 audio channel specifications and automatic low-pass filtering on the LFE channel)
-	 - e.g. for 4th order Ambisonics we need 25 ch audio, split up into 7+7+7+4-channel files, contained in 8-channel aac files with the 4th channel empty
- - dash streaming: one dash manuscript (mpd) needs to be created for the video content, and one dash manuscript for *each* audio file
-	 - video: the manuscript needs to be named *video.mpd*
-	 
-	 - audio: to be found correctly, the dash audio manuscripts are required to be named *audio_01-07ch.mpd*, *audio_08-16ch.mpd*, *audio_17-21ch.mpd* and *audio_22-25ch.mpd* (for 4th-order Ambisonics, adapt accordingly for different orders) 
-	 - all the manuscript files need to be placed in the same folder, with the folder being inside the *media* folder
+### Codec Considerations
+HOAST360 uses MPEG-DASH, and supports video files using H.264 or VP8/VP9. For audio files the OPUS codec is chosen, as it is the only lossy codec supporting multichannel files, which is available in most browsers (not in Safari, see below). Video and audio files are packaged in the webm container for streaming via DASH. The following ffmpeg commands have proven to be effective for encoding media. Adapt the commands according to your needs.
 
-To generate the described files, the following *ffmpeg* and *mp4Box* commands can be used:
+Transcode video to webm (VP9, DASH):
+```
+ffmpeg -i <videoInputFileName> -r 25 -c:v libvpx-vp9 -s 1440x720 -b:v 1800k -minrate 900k -maxrate 2610k -crf 31 -quality good -keyint_min 150 -g 150 -speed 1 -tile-columns 2 -frame-parallel 1 -an -f webm -dash 1 <videoOututFileName.webm>
+```
 
- - create 8ch aac audio via ffmpeg (repeat this for all audio files): `ffmpeg -i audiofilename_01-07ch.wav -c:a aac -b:a 320k -vn audiofilename_01-07ch.m4a`
- - create higher-bitrate video via ffmpeg: `ffmpeg -i videofilename.mov -preset slow -tune film -vsync passthrough -write_tmcd 0 -an -c:v libx264 -x264opts 'keyint=25:min-keyint=25:no-scenecut' -crf 22  -maxrate 5000k -bufsize 10000k -pix_fmt yuv420p -f mp4 -movflags frag_keyframe+empty_moov+default_base_moof videofilename_5000.mp4`
- - create lower-bitrate video via ffmpeg: `ffmpeg -i videofilename.mov -preset slow -tune film -vsync passthrough -write_tmcd 0 -an -c:v libx264 -x264opts 'keyint=25:min-keyint=25:no-scenecut' -crf 23  -maxrate 2000k -bufsize 4000k -pix_fmt yuv420p -f mp4 -movflags frag_keyframe+empty_moov+default_base_moof videofilename_2000.mp4`
- - create dashed audio via mp4Box (repeat this for all audio files): `MP4Box -dash 2000 -rap -frag-rap -bs-switching no -profile "dashavc264:live" audiofilename_01-07ch.m4a -out audio_01-07ch.mpd`
- - create dashed video via mp4Box: `MP4Box -dash 2000 -rap -frag-rap  -bs-switching no -profile "dashavc264:live" videofilename_5000.mp4 videofilename_2000.mp4 -out video.mpd`
+Create DASH manifest for video files, note that HOAST360 will always expect the video manifest to be called 'video.mpd':
+```
+ffmpeg \
+        -f webm_dash_manifest -i <videoFileNameBitrate1.webm> \
+        -f webm_dash_manifest -i <videoFileNameBitrate2.webm> \
+        -f webm_dash_manifest -i <videoFileNameBitrate3.webm> \
+        -c copy -map 0 -map 1 -map 2 \
+        -f webm_dash_manifest \
+        -adaptation_sets 'id=0,streams=0,1,2' \
+        video.mpd
+````
+Transcode multichannel wav audio file to multichannel OPUS in webm container, we recommend a bitrate of 64 kbit/channel/s:
+```
+ffmpeg \
+    -i <audioInputFileName.wav> \
+    -c:a libopus -mapping_family 255 -b:a 1600k -vn -f webm -dash 1 <audioOutputFileName.webm>
+```
+Create DASH manifest for audio file, HOAST360 will expect the manifest to be called 'audio.mpd':
+```
+ffmpeg -f webm_dash_manifest -i <audioFileName.webm> -c copy -map 0 -f webm_dash_manifest -adaptation_sets 'id=0,streams=0' audio.mpd
+```
 
+### Known Issues
+The combination of 360° video rendering and dynamic higher-order Ambisonics binaural rendering is computationally demanding, which is why HOAST360 will not work on mobile devices and probably on older computers. Always make sure to use a recent version of Firefox or a Chromium-based browser (Chrome, Opera, Edge, ...). At the moment we recommend Firefox, as it yielded the best results in our tests.
 
+HOAST360 does not work in Safari, as Safari does not support the OPUS codec.
+
+----------
+### Developing with HOAST360
+For development, using the node package manager [npm](https://www.npmjs.com/) is recommended. After installation of npm, go to the directory of the HOAST360 sources and type `npm install` in the command line. This will install all the required dependencies for development. After changing a source file, type `npm run build` to create a new development build, or `npm run production-build` for a fully-optimized production build. The bundles are generated using webpack and can be found in the 'dist/' folder. You can start a development server using `npm start`.
+
+### Related repositories
+HOAST360 is built upon the open-source video player [video.js](https://videojs.com/), the DASH framework [dash.js](https://github.com/Dash-Industry-Forum/dash.js/wiki) and some of the Ambisonics processing is based on [JSAmbisonics](https://github.com/polarch/JSAmbisonics).
+
+### License
+HOAST360 is released under GNU GPLv3.

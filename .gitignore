@@ -13,3 +13,5 @@ node_modules/*
 *.m4v
 webm_media/
 *.reapeaks
+scripts/
+img/
