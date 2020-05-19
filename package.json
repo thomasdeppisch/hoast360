@@ -36,9 +36,9 @@
     "numeric": "^1.2.6",
     "spherical-harmonic-transform": "^0.1.1",
     "video.js": "^7.7.6",
-    "videojs-contrib-dash": "git+ssh://git@github.com/thomasdeppisch/videojs-contrib-dash.git",
+    "videojs-contrib-dash": "github:thomasdeppisch/videojs-contrib-dash",
     "videojs-contrib-quality-levels": "^2.0.9",
-    "videojs-http-source-selector": "git+ssh://git@github.com/thomasdeppisch/videojs-http-source-selector.git",
+    "videojs-http-source-selector": "github:thomasdeppisch/videojs-http-source-selector",
     "videojs-xr": "0.0.3"
   }
 }
