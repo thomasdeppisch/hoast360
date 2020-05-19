@@ -110,6 +110,7 @@ export class HOAST360 {
         this.videoPlayer.pause();
         this._disconnectAudio();
         this.videoPlayer.xr().reset();
+        this.videoPlayer.dash.mediaPlayer.reset();
         this.videoPlayer.reset(); // this triggers an error "failed to remove source buffer from media source", but seems to work anyway
         this.audioPlayer.reset();
     }
