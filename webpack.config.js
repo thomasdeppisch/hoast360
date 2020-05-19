@@ -12,7 +12,7 @@ const config = {
             {
                 enforce: 'pre',
                 test: /\.js$/,
-                exclude: /node_modules|dependencies(?:\/|\\)videojs-xr\.es\.js/,
+                exclude: /node_modules/,
                 loader: 'eslint-loader',
             },
             {
