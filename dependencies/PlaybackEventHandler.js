@@ -59,7 +59,6 @@ export default class PlaybackEventHandler {
                 self.context.resume();
                 console.log("resuming context");
             }
-
             self.audioPlayer.play();
         });
 
@@ -164,7 +163,6 @@ export default class PlaybackEventHandler {
 
     checkReadyStates() {
         if (this.readyForPlayback() && this.videoPlayer.paused()) {
-            this.videoPlayer.removeClass("vjs-seeking");
             if (this.wasPlaying) {
                 this.startPlayback();
             }
@@ -186,9 +184,14 @@ export default class PlaybackEventHandler {
             && this.isAudioReady()
             && this.allBuffersLoaded
             && !this.isSeeking)
+        {
+            this.videoPlayer.removeClass("vjs-seeking");
             return true;
+        }
         else
+        {
             return false;
+        }
     }
 
     isAudioReady() {
