@@ -107,6 +107,7 @@ export class HOAST360 {
             return;
         }
 
+        this.playbackEventHandler.reset();
         this.videoPlayer.pause();
         this._disconnectAudio();
         this.videoPlayer.xr().reset();
