@@ -78,7 +78,7 @@ export class HOAST360 {
         this.sourceNode = this.context.createMediaElementSource(this.audioElement);
 
         let playerhtml = "<video-js id='videojs-player' class='video-js vjs-big-play-centered' controls preload='auto' crossorigin='anonymous' data-setup='{}'></video-js>";
-        document.getElementById('hoast360Div').innerHTML = playerhtml;
+        document.getElementById('hoast360Div').innerHTML += playerhtml;
         this.videoPlayer = videojs('videojs-player', {
             html5: { nativeCaptions: false },
             liveui: true,
