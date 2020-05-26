@@ -18,8 +18,9 @@ For Chromium-based browsers the following flags must be set via chrome://flags f
  - disable #xr-sandbox
 
 ### Using HOAST360
-Simply import the current HOAST360 bundle from the 'dist/' folder via a script tag and initialize it with the path to your media folder, the path to the decoding filters, and the Ambisonics order. You can find the decoding filters in this repository under 'irs/'. The media folder has to contain two separate DASH manifest files, called 'video.mpd' and 'audio.mpd', respectively, see below for codec details. Ambisonic orders 1 to 4 are supported.
+First, create a div called 'hoast360Div' as a home for the player. Then, simply import the current HOAST360 bundle from the 'dist/' folder via a script tag and initialize it with the path to your media folder, the path to the decoding filters, and the Ambisonics order. You can find the decoding filters in this repository under 'irs/'. The media folder has to contain two separate DASH manifest files, called 'video.mpd' and 'audio.mpd', respectively, see below for codec details. Ambisonic orders 1 to 4 are supported.
 ```html
+<div id="hoast360Div"></div>
 <script src="//path/to/hoast360.bundle.js"></script>
 <script>
     var hoast360 = new HOAST360();
@@ -29,7 +30,9 @@ Simply import the current HOAST360 bundle from the 'dist/' folder via a script t
 ```
 Whenever you want to load a new source, make sure to reset HOAST360 using
 ```html
+<script>
     hoast360.reset();
+</script>
 ```
 before initializing with the new media path like above.
 
