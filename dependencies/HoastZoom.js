@@ -1,3 +1,27 @@
+/*
+ ==============================================================================
+ This file is part of hoast360, the open-source, higher-order Ambisonics, 360
+ degree audio/video player.
+
+ https://github.com/thomasdeppisch/hoast360
+
+ Authors: Thomas Deppisch, Nils Meyer-Kahlen
+ 
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ ==============================================================================
+ */
+
 export const zoomMtx = [  [  [ 0.64625, 2.4461e-05, -0.0004089, 0.20862, 5.0219e-05, -0.00052748, -0.1093, -0.00078951, 0.14164, 0.00021747, -0.00079888, 0.00048411, 0.00044694, -0.093541, -0.00090626, 0.049019, 0.00050964, -0.00048203, 0.00092489, 0.00043532, 0.02554, 0.00037256, -0.037707, -0.00083965, -0.025445] ,
   [ 2.4406e-05, 0.58558, -0.00041143, 3.8856e-05, 0.14513, 5.0484e-05, 0.00033858, -0.0005266, 0.00025715, 0.14072, -2.2435e-05, -0.040347, 0.00057186, 0.00054592, 0.0001218, 0.00052198, 0.086187, -0.00023946, -0.041983, 3.6777e-05, -0.00068321, 0.00043714, 0.00011039, 0.00079005, 0.00054782] ,
   [ -0.00041095, -0.00041143, 0.54842, -0.00061474, -0.0005266, 0.00042247, 2.6998e-05, 0.087242, -0.0005966, -0.00028013, 0.00073651, -6.9342e-05, -0.073972, -0.00034061, 0.064364, -0.00048763, 9.7077e-05, 0.00079363, -0.0002939, -0.00012281, 0.00043887, -0.084714, -0.00068878, 0.023305, -0.00028636] ,
