@@ -18,9 +18,15 @@ For Chromium-based browsers the following flags must be set via chrome://flags f
  - disable #xr-sandbox
 
 ### Using HOAST360
-First, create a div called 'hoast360Div' as a home for the player. Then, simply import the current HOAST360 bundle from the 'dist/' folder via a script tag and initialize it with the path to your media folder, the path to the decoding filters, and the Ambisonics order. You can find the decoding filters in this repository under 'irs/'. The media folder has to contain two separate DASH manifest files, called 'video.mpd' and 'audio.mpd', respectively, see below for codec details. Ambisonic orders 1 to 4 are supported.
+First, create a video-js HTML element with id 'hoast360-player' as a home for the player. Then, simply import the current HOAST360 bundle from the 'dist/' folder via a script tag and initialize it with the path to your media folder, the path to the decoding filters, and the Ambisonics order. You can find the decoding filters in this repository under 'irs/'. The media folder has to contain two separate DASH manifest files, called 'video.mpd' and 'audio.mpd', respectively, see below for codec details. Ambisonic orders 1 to 4 are supported.
 ```html
-<div id="hoast360Div"></div>
+<video-js id='hoast360-player' class='video-js vjs-fluid vjs-big-play-centered ' controls preload='auto' crossorigin="anonymous" data-setup='{}'>
+    <p class='vjs-no-js'>
+        To view this video please enable JavaScript, and consider upgrading to a web browser that
+        <a href='https://videojs.com/html5-video-support/' target='_blank'>supports HTML5 video</a>
+    </p>
+</video-js>
+
 <script src="//path/to/hoast360.bundle.js"></script>
 <script>
     var hoast360 = new HOAST360();
@@ -34,7 +40,7 @@ Whenever you want to load a new source, make sure to reset HOAST360 using
     hoast360.reset();
 </script>
 ```
-before initializing with the new media path like above.
+before initializing with the new media path like above. For development, we recommend using a development server to prevent cross-origin resource sharing (CORS) errors.
 
 ### Codec Considerations
 HOAST360 uses MPEG-DASH, and supports video files using H.264 or VP8/VP9. For audio files the OPUS codec is chosen, as it is the only lossy codec supporting multichannel files, which is available in most browsers (not in Safari, see below). Video and audio files are packaged in the webm container for streaming via DASH. The following ffmpeg commands have proven to be effective for encoding media. Adapt the commands according to your needs.
