@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MPD
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="urn:mpeg:DASH:schema:MPD:2011"
+  xsi:schemaLocation="urn:mpeg:DASH:schema:MPD:2011"
+  type="static"
+  mediaPresentationDuration="PT242.48S"
+  minBufferTime="PT1S"
+  profiles="urn:webm:dash:profile:webm-on-demand:2012">
+<Period id="0" start="PT0S" duration="PT242.48S" >
+<AdaptationSet id="0" mimeType="video/webm" codecs="vp9" bitstreamSwitching="true" subsegmentAlignment="true" subsegmentStartsWithSAP="1">
+<Representation id="0" bandwidth="199088" width="720" height="360">
+<BaseURL>hoast_demo_o4_720.webm</BaseURL>
+<SegmentBase
+  indexRange="5253845-5254657">
+<Initialization
+  range="0-761" />
+</SegmentBase>
+</Representation>
+<Representation id="1" bandwidth="332777" width="1080" height="540">
+<BaseURL>hoast_demo_o4_1080.webm</BaseURL>
+<SegmentBase
+  indexRange="8814476-8815288">
+<Initialization
+  range="0-761" />
+</SegmentBase>
+</Representation>
+<Representation id="2" bandwidth="537768" width="1440" height="720">
+<BaseURL>hoast_demo_o4_1440.webm</BaseURL>
+<SegmentBase
+  indexRange="14306955-14307767">
+<Initialization
+  range="0-761" />
+</SegmentBase>
+</Representation>
+</AdaptationSet>
+</Period>
+</MPD>
