@@ -3,7 +3,7 @@
 HOAST360 is the open-source, higher-order Ambisonics, 360° video player with acoustic zoom. HOAST360 dynamically outputs a binaural audio stream from up to fourth-order Ambisonics audio content.  
 You can try out HOAST360 at the [HOAST Library](https://hoast.iem.at).
 
-Technical details are explained in an AES eBrief (link tba).
+Technical details are explained in an [AES eBrief](http://www.aes.org/e-lib/browse.cfm?elib=20828).
 
 ----------
 ### Manipulate the Field-Of-View (FOV)
