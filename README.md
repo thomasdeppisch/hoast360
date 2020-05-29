@@ -5,6 +5,18 @@ You can try out HOAST360 at the [HOAST Library](https://hoast.iem.at).
 
 Technical details are explained in an [AES eBrief](http://www.aes.org/e-lib/browse.cfm?elib=20828).
 
+---
+>
+> Thomas Deppisch (University of Technology, University of Music and Performing Arts, Graz)
+>
+> thomas.deppisch@student.tugraz.at
+>
+> Nils Meyer-Kahlen (Aalto Acoustics Lab)
+>
+> nils.meyer-kahlen@aalto.fi
+>
+----
+
 ----------
 ### Manipulate the Field-Of-View (FOV)
 HOAST360 provides two ways to manipulate the audio-visual FOV. Drag on the video canvas with your mouse to rotate the FOV. Use your mouse wheel to zoom in and out, visually as well as acoustically. HOAST360 directly outputs a binaural audio stream, expecting the listener to **_wear headphones_**!
