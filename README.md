@@ -81,10 +81,14 @@ ffmpeg -f webm_dash_manifest -i <audioFileName.webm> -c copy -map 0 -f webm_dash
 ```
 
 ### Known Issues
-The combination of 360° video rendering and dynamic higher-order Ambisonics binaural rendering is computationally demanding, which is why HOAST360 will not work on mobile devices and on some older computers. Always make sure to use a recent version of Firefox or a Chromium-based browser (Chrome, Opera, Edge, ...). At the moment we recommend Firefox, as it yielded the best results in our tests. If playback is not smooth, consider lowering the video quality by using the settings dropdown menu of the player. Lowering the video quality will NOT impair audio quality.
+- The combination of 360° video rendering and dynamic higher-order Ambisonics binaural rendering is computationally demanding, which is why HOAST360 will not work on mobile devices and on some older computers. Always make sure to use a recent version of Firefox or a Chromium-based browser (Chrome, Opera, Edge, ...). At the moment we recommend Firefox, as it yielded the best results in our tests. If playback is not smooth, consider lowering the video quality by using the settings dropdown menu of the player. Lowering the video quality will NOT impair audio quality.
 
+- HOAST360 does not work in Safari due to lacking OPUS support.
 
-HOAST360 does not work in Safari due to lacking OPUS support.
+- If you encounter a playback error in Chrome (VIDEOJS: ERROR: (CODE:4 MEDIA_ERR_SRC_NOT_SUPPORTED)), it might be due to video meta data. Playback should work if you remove side data, such as 'stereo3d' and 'spherical' information. You can remove such meta data by copying with ffmpeg:
+```
+ffmpeg -i input_video_with_metadata.mov -c:v copy -an output_video_without_metadata.mov
+```
 
 ----------
 ### Developing with HOAST360
