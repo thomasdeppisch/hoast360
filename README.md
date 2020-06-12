@@ -18,7 +18,7 @@ Technical details are explained in an [AES eBrief](http://www.aes.org/e-lib/brow
 HOAST360 provides two ways to manipulate the audio-visual FOV. Drag on the video canvas with your mouse to rotate the FOV. Use your mouse wheel to zoom in and out, visually as well as acoustically. HOAST360 directly outputs a binaural audio stream, expecting the listener to **_wear headphones_**!
 
 ### VR Ready
-HOAST360 supports HMDs via the WebXR Device API and an XR polyfill. This will work in recent versions of Firefox and Chromium-based (Chrome, Opera, Edge, ...) browsers. When an HMD is detected, HOAST360 automatically displays a small VR-toggle in the lower right to activate the XR environment.
+HOAST360 supports HMDs via the WebXR Device API and an XR polyfill. This will work in recent versions of Firefox and Chromium-based (Chrome, Opera, Edge, ...) browsers. When an HMD is detected, HOAST360 automatically displays a small VR-toggle in the lower right to activate the XR environment. So far tested with Oculus Rift and HTC Vive.
 
 For Chromium-based browsers the following flags must be set via chrome://flags for WebXR to work:
  - enable #webxr
