@@ -134,8 +134,8 @@ export default class PlaybackEventHandler {
         this.audioPlayer.off(dashjs.MediaPlayer.events["PLAYBACK_SEEKING"], this.onAudioPlaybackSeeking, this);
 
         this.videoPlayer.off("canplay");
-        this.videoPlayer.off("play");
-        this.videoPlayer.off("pause");
+        // this.videoPlayer.off("play");
+        // this.videoPlayer.off("pause");
         this.videoPlayer.off("seeking");
         this.videoPlayer.off("seeked");
         this.videoPlayer.off("waiting");
