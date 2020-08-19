@@ -256,6 +256,10 @@ export class HOAST360 {
         let getUrl = window.location;
         let base_url = getUrl.protocol + "//" + getUrl.host + "/"
         this.numCh = (this.order + 1) * (this.order + 1);
-        this.irs = base_url + this.irUrl + 'hoast_o' + this.order + '.wav';
+        
+        if (this.irUrl.includes("://")) // protocol already included
+            this.irs = this.irUrl + 'hoast_o' + this.order + '.wav';
+        else
+            this.irs = base_url + this.irUrl + 'hoast_o' + this.order + '.wav';            
     }
 }
