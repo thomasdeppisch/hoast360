@@ -22,6 +22,7 @@
  ==============================================================================
  */
 
+// eslint-disable-next-line no-unused-vars
 import * as dashjs from 'dashjs';
 import videojs from 'video.js';
 import 'videojs-contrib-dash'
@@ -73,9 +74,6 @@ export class HOAST360 {
             this.opusSupport = false;
         }
 
-        // create sourceNodes and connect to splitters as we cannot disconnect and reuse these
-        // (error: HTMLMediaElement already connected ...)
-        this.sourceNode = this.context.createMediaElementSource(this.audioElement);
         this.videoPlayer = videojs('hoast360-player', {
             html5: { nativeCaptions: false },
             liveui: true,
@@ -106,12 +104,19 @@ export class HOAST360 {
         this.irUrl = newIrUrl;
         this._setOrderDependentVariables();
 
-        this.videoPlayer.src({ type: 'application/dash+xml', src: this.mediaUrl + 'video.mpd' });
+        if (this.mediaUrl.includes(".mpd")) { // in this case audio and video are inside the same mpd
+            this.sourceNode = this.context.createMediaElementSource(this.videoPlayer.tech({ IWillNotUseThisInPlugins: true }).el());
+            this.videoPlayer.src({ type: 'application/dash+xml', src: this.mediaUrl });
+        } else { // load audio and video from separate mpds
+            this.audioPlayer = dashjs.MediaPlayer().create();
+            this.sourceNode = this.context.createMediaElementSource(this.audioElement);
+            this.videoPlayer.src({ type: 'application/dash+xml', src: this.mediaUrl + 'video.mpd' });
+            this.audioPlayer.initialize(this.audioElement);
+            this.audioPlayer.setAutoPlay(false);
+            this.audioPlayer.attachSource(this.mediaUrl + "audio.mpd");
+        }
 
-        this.audioPlayer = dashjs.MediaPlayer().create();
-        this.audioPlayer.initialize(this.audioElement);
-        this.audioPlayer.setAutoPlay(false);
-        this.audioPlayer.attachSource(this.mediaUrl + "audio.mpd");
+
         let scope = this;
 
         this.videoPlayer.xr().on("initialized", function () {
@@ -133,7 +138,8 @@ export class HOAST360 {
         this.videoPlayer.xr().reset();
         this.videoPlayer.dash.mediaPlayer.reset();
         this.videoPlayer.reset(); // this triggers an error "failed to remove source buffer from media source", but seems to work anyway
-        this.audioPlayer.reset();
+        if (this.audioPlayer)
+            this.audioPlayer.reset();
     }
 
     _disconnectAudio() {

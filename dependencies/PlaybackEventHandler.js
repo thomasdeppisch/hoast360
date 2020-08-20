@@ -68,11 +68,13 @@ export default class PlaybackEventHandler {
             self.togglePlay();
         });
 
-        this.audioPlayer.on(dashjs.MediaPlayer.events["CAN_PLAY"], this.onAudioCanPlay, this);
-        // this.audioPlayer.on(dashjs.MediaPlayer.events["BUFFER_LOADED"], this.onAudioCanPlay, this);
-        this.audioPlayer.on(dashjs.MediaPlayer.events["PLAYBACK_WAITING"], this.onAudioPlaybackWaiting, this);
-        this.audioPlayer.on(dashjs.MediaPlayer.events["PLAYBACK_SEEKING"], this.onAudioPlaybackSeeking, this);
-        this.audioPlayer.on(dashjs.MediaPlayer.events["PLAYBACK_SEEKED"], this.onAudioPlaybackSeeked, this);
+        if (this.audioPlayer) {
+            this.audioPlayer.on(dashjs.MediaPlayer.events["CAN_PLAY"], this.onAudioCanPlay, this);
+            // this.audioPlayer.on(dashjs.MediaPlayer.events["BUFFER_LOADED"], this.onAudioCanPlay, this);
+            this.audioPlayer.on(dashjs.MediaPlayer.events["PLAYBACK_WAITING"], this.onAudioPlaybackWaiting, this);
+            this.audioPlayer.on(dashjs.MediaPlayer.events["PLAYBACK_SEEKING"], this.onAudioPlaybackSeeking, this);
+            this.audioPlayer.on(dashjs.MediaPlayer.events["PLAYBACK_SEEKED"], this.onAudioPlaybackSeeked, this);
+        }
 
         this.videoPlayer.on("canplay", function () {
             self.checkReadyStates();
@@ -83,11 +85,13 @@ export default class PlaybackEventHandler {
                 self.context.resume();
                 console.log("resuming context");
             }
-            self.audioPlayer.play();
+            if (self.audioPlayer)
+                self.audioPlayer.play();
         });
 
         this.videoPlayer.on("pause", function () {
-            self.audioPlayer.pause();
+            if (self.audioPlayer)
+                self.audioPlayer.pause();
         });
 
         this.videoPlayer.on("seeking", function () {
@@ -97,7 +101,8 @@ export default class PlaybackEventHandler {
 
         this.videoPlayer.on("seeked", function () {
             let currTime = this.currentTime();
-            self.audioPlayer.getVideoElement().currentTime = currTime; // do not use seek() method, there seems to be a bug
+            if (self.audioPlayer)
+                self.audioPlayer.getVideoElement().currentTime = currTime; // do not use seek() method, there seems to be a bug
             //self.audioPlayer.seek(currTime);
         })
 
@@ -128,10 +133,12 @@ export default class PlaybackEventHandler {
         this.videoPlayer.controlBar.playToggle.off('click');
         this.videoPlayer.bigPlayButton.off("click");
 
-        this.audioPlayer.off(dashjs.MediaPlayer.events["CAN_PLAY"], this.onAudioCanPlay, this);
-        // this.audioPlayer.off(dashjs.MediaPlayer.events["BUFFER_LOADED"], this.onAudioCanPlay, this);
-        this.audioPlayer.off(dashjs.MediaPlayer.events["PLAYBACK_WAITING"], this.onAudioPlaybackWaiting, this);
-        this.audioPlayer.off(dashjs.MediaPlayer.events["PLAYBACK_SEEKING"], this.onAudioPlaybackSeeking, this);
+        if (this.audioPlayer) {
+            this.audioPlayer.off(dashjs.MediaPlayer.events["CAN_PLAY"], this.onAudioCanPlay, this);
+            // this.audioPlayer.off(dashjs.MediaPlayer.events["BUFFER_LOADED"], this.onAudioCanPlay, this);
+            this.audioPlayer.off(dashjs.MediaPlayer.events["PLAYBACK_WAITING"], this.onAudioPlaybackWaiting, this);
+            this.audioPlayer.off(dashjs.MediaPlayer.events["PLAYBACK_SEEKING"], this.onAudioPlaybackSeeking, this);
+        }
 
         this.videoPlayer.off("canplay");
         // this.videoPlayer.off("play");
@@ -170,7 +177,8 @@ export default class PlaybackEventHandler {
             this.waitingForPlayback = true;
             this.videoPlayer.pause();
             this.videoPlayer.addClass("vjs-seeking"); // show loading spinner
-            this.audioPlayer.pause();
+            if (this.audioPlayer)
+                this.audioPlayer.pause();
         }
     }
 
@@ -219,7 +227,7 @@ export default class PlaybackEventHandler {
     }
 
     isAudioReady() {
-        if (this.audioPlayer.getVideoElement().readyState < 3)
+        if (this.audioPlayer && this.audioPlayer.getVideoElement().readyState < 3)
             return false;
 
         return true;
