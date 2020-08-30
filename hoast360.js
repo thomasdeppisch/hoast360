@@ -22,7 +22,6 @@
  ==============================================================================
  */
 
-// eslint-disable-next-line no-unused-vars
 import * as dashjs from 'dashjs';
 import videojs from 'video.js';
 import 'videojs-contrib-dash'
@@ -116,13 +115,15 @@ export class HOAST360 {
             this.audioPlayer.attachSource(this.mediaUrl + "audio.mpd");
         }
 
-
         let scope = this;
 
         this.videoPlayer.xr().on("initialized", function () {
             console.log("xr initialized");
             scope._startSetup();
-            scope.playbackEventHandler.initialize(scope.videoPlayer, scope.audioPlayer);
+
+            // playback event handler is only needed if we have separate audio and video players
+            if (this.audioPlayer)
+                scope.playbackEventHandler.initialize(scope.videoPlayer, scope.audioPlayer);
         });
     }
 
@@ -132,7 +133,9 @@ export class HOAST360 {
             return;
         }
 
-        this.playbackEventHandler.reset();
+        if (this.audioPlayer)
+            this.playbackEventHandler.reset();
+
         this.videoPlayer.pause();
         this._disconnectAudio();
         this.videoPlayer.xr().reset();
@@ -173,7 +176,9 @@ export class HOAST360 {
 
         var loader_filters = new HOASTloader(this.context, this.order, this.irs, (foaBuffer, hoaBuffer) => {
             this.decoder.updateFilters(foaBuffer, hoaBuffer);
-            this.playbackEventHandler.setAllBuffersLoaded(true);
+
+            if (this.audioPlayer)
+                this.playbackEventHandler.setAllBuffersLoaded(true);
         });
         loader_filters.load();
 
