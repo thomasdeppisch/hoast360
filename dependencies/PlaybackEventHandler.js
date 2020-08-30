@@ -83,13 +83,11 @@ export default class PlaybackEventHandler {
                 self.context.resume();
                 console.log("resuming context");
             }
-            if (self.audioPlayer)
-                self.audioPlayer.play();
+            self.audioPlayer.play();
         });
 
         this.videoPlayer.on("pause", function () {
-            if (self.audioPlayer)
-                self.audioPlayer.pause();
+            self.audioPlayer.pause();
         });
 
         this.videoPlayer.on("seeking", function () {
