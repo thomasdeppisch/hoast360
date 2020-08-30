@@ -26,7 +26,7 @@ For Chromium-based browsers the following flags must be set via chrome://flags f
  - disable #xr-sandbox
 
 ### Using HOAST360
-First, create a video-js HTML element with id 'hoast360-player' as a home for the player. Then, simply import the current HOAST360 bundle from the 'dist/' folder via a script tag and initialize it with the path to your media folder, the path to the decoding filters (this can be a relative path or a URL starting with 'http://'), and the Ambisonics order. You can find the decoding filters in this repository under 'irs/'. The media folder has to contain two separate DASH manifest files, called 'video.mpd' and 'audio.mpd', respectively, see below for codec details. Ambisonic orders 1 to 4 are supported.
+First, create a video-js HTML element with id 'hoast360-player' as a home for the player. Then, simply import the current HOAST360 bundle from the 'dist/' folder via a script tag and initialize it with the path to your DASH manifest mpd, the path to the decoding filters and the Ambisonics order. You can find the decoding filters in this repository under 'irs/'. Ambisonic orders 1 to 4 are supported.
 ```html
 <video-js id='hoast360-player' class='video-js vjs-fluid vjs-big-play-centered ' controls preload='auto' crossorigin="anonymous" data-setup='{}'>
     <p class='vjs-no-js'>
@@ -39,7 +39,7 @@ First, create a video-js HTML element with id 'hoast360-player' as a home for th
 <script>
     var hoast360 = new HOAST360();
     var ambisonicsOrder = 4;
-    hoast360.initialize("./path/to/media/", "./path/to/irs/", ambisonicsOrder);
+    hoast360.initialize("./path/to/media/manifest.mpd", "./path/to/irs/", ambisonicsOrder);
 </script>
 ```
 Whenever you want to load a new source, make sure to reset HOAST360 using
@@ -57,27 +57,20 @@ Transcode video to webm (VP9, DASH):
 ```
 ffmpeg -i <videoInputFileName> -r 25 -c:v libvpx-vp9 -s 1440x720 -b:v 1800k -minrate 900k -maxrate 2610k -crf 31 -quality good -keyint_min 150 -g 150 -speed 1 -tile-columns 2 -frame-parallel 1 -an -f webm -dash 1 <videoOututFileName.webm>
 ```
-
-Create DASH manifest for video files, note that HOAST360 will always expect the video manifest to be called 'video.mpd':
-```
-ffmpeg \
-        -f webm_dash_manifest -i <videoFileNameBitrate1.webm> \
-        -f webm_dash_manifest -i <videoFileNameBitrate2.webm> \
-        -f webm_dash_manifest -i <videoFileNameBitrate3.webm> \
-        -c copy -map 0 -map 1 -map 2 \
-        -f webm_dash_manifest \
-        -adaptation_sets 'id=0,streams=0,1,2' \
-        video.mpd
-````
 Transcode multichannel wav audio file to multichannel OPUS in webm container, we recommend a bitrate of 64 kbit/channel/s:
 ```
 ffmpeg \
     -i <audioInputFileName.wav> \
     -c:a libopus -mapping_family 255 -b:a 1600k -vn -f webm -dash 1 <audioOutputFileName.webm>
 ```
-Create DASH manifest for audio file, HOAST360 will expect the manifest to be called 'audio.mpd':
+Join audio and video:
 ```
-ffmpeg -f webm_dash_manifest -i <audioFileName.webm> -c copy -map 0 -f webm_dash_manifest -adaptation_sets 'id=0,streams=0' audio.mpd
+ffmpeg -i <videoOututFileName.webm> -i <audioOutputFileName.webm> -c copy <audioVideoJoined.webm>
+```
+
+Create DASH manifest:
+```
+ffmpeg -f webm_dash_manifest -i <audioVideoJoined.webm> -c copy -map 0 -f webm_dash_manifest -adaptation_sets 'id=0,streams=0' manifest.mpd
 ```
 
 ### Known Issues
