@@ -106,6 +106,7 @@ export class HOAST360 {
         if (this.mediaUrl.includes(".mpd")) { // in this case audio and video are inside the same mpd
             this.sourceNode = this.context.createMediaElementSource(this.videoPlayer.tech({ IWillNotUseThisInPlugins: true }).el());
             this.videoPlayer.src({ type: 'application/dash+xml', src: this.mediaUrl });
+            this.audioPlayer = null;
         } else { // load audio and video from separate mpds
             this.audioPlayer = dashjs.MediaPlayer().create();
             this.sourceNode = this.context.createMediaElementSource(this.audioElement);
