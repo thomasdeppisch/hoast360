@@ -122,7 +122,7 @@ export class HOAST360 {
             scope._startSetup();
 
             // playback event handler is only needed if we have separate audio and video players
-            if (this.audioPlayer)
+            if (scope.audioPlayer)
                 scope.playbackEventHandler.initialize(scope.videoPlayer, scope.audioPlayer);
         });
     }
