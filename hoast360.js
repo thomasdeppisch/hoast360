@@ -73,9 +73,6 @@ export class HOAST360 {
             this.opusSupport = false;
         }
 
-        // create sourceNodes and connect to splitters as we cannot disconnect and reuse these
-        // (error: HTMLMediaElement already connected ...)
-        this.sourceNode = this.context.createMediaElementSource(this.audioElement);
         this.videoPlayer = videojs('hoast360-player', {
             html5: { nativeCaptions: false },
             liveui: true,
@@ -106,18 +103,28 @@ export class HOAST360 {
         this.irUrl = newIrUrl;
         this._setOrderDependentVariables();
 
-        this.videoPlayer.src({ type: 'application/dash+xml', src: this.mediaUrl + 'video.mpd' });
+        if (this.mediaUrl.includes(".mpd")) { // in this case audio and video are inside the same mpd
+            this.sourceNode = this.context.createMediaElementSource(this.videoPlayer.tech({ IWillNotUseThisInPlugins: true }).el());
+            this.videoPlayer.src({ type: 'application/dash+xml', src: this.mediaUrl });
+            this.audioPlayer = null;
+        } else { // load audio and video from separate mpds
+            this.audioPlayer = dashjs.MediaPlayer().create();
+            this.sourceNode = this.context.createMediaElementSource(this.audioElement);
+            this.videoPlayer.src({ type: 'application/dash+xml', src: this.mediaUrl + 'video.mpd' });
+            this.audioPlayer.initialize(this.audioElement);
+            this.audioPlayer.setAutoPlay(false);
+            this.audioPlayer.attachSource(this.mediaUrl + "audio.mpd");
+        }
 
-        this.audioPlayer = dashjs.MediaPlayer().create();
-        this.audioPlayer.initialize(this.audioElement);
-        this.audioPlayer.setAutoPlay(false);
-        this.audioPlayer.attachSource(this.mediaUrl + "audio.mpd");
         let scope = this;
 
         this.videoPlayer.xr().on("initialized", function () {
             console.log("xr initialized");
             scope._startSetup();
-            scope.playbackEventHandler.initialize(scope.videoPlayer, scope.audioPlayer);
+
+            // playback event handler is only needed if we have separate audio and video players
+            if (scope.audioPlayer)
+                scope.playbackEventHandler.initialize(scope.videoPlayer, scope.audioPlayer);
         });
     }
 
@@ -127,13 +134,16 @@ export class HOAST360 {
             return;
         }
 
-        this.playbackEventHandler.reset();
+        if (this.audioPlayer)
+            this.playbackEventHandler.reset();
+
         this.videoPlayer.pause();
         this._disconnectAudio();
         this.videoPlayer.xr().reset();
         this.videoPlayer.dash.mediaPlayer.reset();
         this.videoPlayer.reset(); // this triggers an error "failed to remove source buffer from media source", but seems to work anyway
-        this.audioPlayer.reset();
+        if (this.audioPlayer)
+            this.audioPlayer.reset();
     }
 
     _disconnectAudio() {
@@ -167,7 +177,9 @@ export class HOAST360 {
 
         var loader_filters = new HOASTloader(this.context, this.order, this.irs, (foaBuffer, hoaBuffer) => {
             this.decoder.updateFilters(foaBuffer, hoaBuffer);
-            this.playbackEventHandler.setAllBuffersLoaded(true);
+
+            if (this.audioPlayer)
+                this.playbackEventHandler.setAllBuffersLoaded(true);
         });
         loader_filters.load();
 

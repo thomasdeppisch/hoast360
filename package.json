@@ -1,6 +1,6 @@
 {
   "name": "hoast-player",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "360 degree video player with dynamic binaural higher-order ambisonics rendering, depending on view direction and zoom factor.",
   "main": "hoast360.js",
   "scripts": {
@@ -17,7 +17,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@babel/core": "^7.11.1",
+    "@babel/core": "^7.11.4",
     "@babel/preset-env": "^7.11.0",
     "babel-loader": "^8.1.0",
     "css-loader": "^3.6.0",
