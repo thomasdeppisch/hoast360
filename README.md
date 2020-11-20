@@ -48,7 +48,8 @@ Whenever you want to load a new source, make sure to reset HOAST360 using
     hoast360.reset();
 </script>
 ```
-before initializing with the new media path like above. The above steps are also done in index.html, you can use this file for a jump start. For development, we recommend using a development server to prevent cross-origin resource sharing (CORS) errors. Note that some development servers create an error 'required tag not found'. In this case please use a different development server, we recommend this simple [node server](https://www.npmjs.com/package/http-server).
+before initializing with the new media path like above. The above steps are also done in index.html, you can use this file for a jump start. For development, we recommend using a development server to prevent cross-origin resource sharing (CORS) errors. Note that some development servers create an error 'required tag not found'. In this case please use a different development server, we recommend this simple [node server](https://www.npmjs.com/package/http-server). If you deploy HOAST360 to a webserver you might need to use an absolute path for the irs, i.e.
+```hoast360.initialize("./path/to/media/manifest.mpd", "https://mywebsite.com/path/to/irs/", ambisonicsOrder);```
 
 ### Codec Considerations
 HOAST360 uses MPEG-DASH, and supports video files using H.264 or VP8/VP9. For audio files the OPUS codec is chosen, as it is the only lossy codec supporting multichannel files, which is available in most browsers (not in Safari, see below). Video and audio files are packaged in the webm container for streaming via DASH. The following ffmpeg commands have proven to be effective for encoding media. Adapt the commands according to your needs.
