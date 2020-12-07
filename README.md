@@ -5,9 +5,9 @@ You can try out HOAST360 at the [HOAST Library](https://hoast.iem.at).
 
 Technical details are explained in an [AES eBrief](http://www.aes.org/e-lib/browse.cfm?elib=20828).
 
-> Thomas Deppisch (University of Technology, University of Music and Performing Arts, Graz)
+> Thomas Deppisch (Applied Acoustics division at Chalmers University of Technology, Gothenburg.)
 >
-> thomas.deppisch@student.tugraz.at
+> thomas.deppisch@chalmers.se
 >
 > Nils Meyer-Kahlen (Aalto Acoustics Lab)
 >
@@ -93,3 +93,6 @@ HOAST360 is built upon the open-source video player [video.js](https://videojs.c
 
 ### License
 HOAST360 is released under GNU GPLv3.
+
+### Acknowledgment
+This work was partly funded by the vice rectorate for research of the University of Music and Performing Arts, Graz, within the framework of a knowledge transfer project. Furthermore, we would like to especially thank IOhannes Zmölnig, Matthias Frank, Franz Zotter and Daniel Rudrich from the Institute of Electronic Music and Acoustics (IEM), Graz, for their ongoing support and Tomasz Zernicki and Tomasz Latka from Zylia for their encouragement in the early stages of this project!
