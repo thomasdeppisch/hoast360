@@ -95,4 +95,4 @@ HOAST360 is built upon the open-source video player [video.js](https://videojs.c
 HOAST360 is released under GNU GPLv3.
 
 ### Acknowledgment
-This work was partly funded by the vice rectorate for research of the University of Music and Performing Arts, Graz, within the framework of a knowledge transfer project. Furthermore, we would like to especially thank IOhannes Zmölnig, Matthias Frank, Franz Zotter and Daniel Rudrich from the Institute of Electronic Music and Acoustics (IEM), Graz, for their ongoing support and Tomasz Zernicki and Tomasz Latka from Zylia for their encouragement in the early stages of this project!
+This work was partly funded by the vice rectorate for research of the University of Music and Performing Arts, Graz, within the framework of a knowledge transfer project. Furthermore, we would like to especially thank IOhannes Zmölnig, Matthias Frank, Franz Zotter and Daniel Rudrich from the Institute of Electronic Music and Acoustics (IEM), Graz, for their ongoing support, Benjamin Hofer for his great help and expertise in web development and Tomasz Zernicki and Tomasz Latka from Zylia for their encouragement in the early stages of this project!
