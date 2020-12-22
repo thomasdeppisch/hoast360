@@ -73,6 +73,7 @@ Create DASH manifest:
 ```
 ffmpeg -f webm_dash_manifest -i <audioVideoJoined.webm> -c copy -map 0 -f webm_dash_manifest -adaptation_sets 'id=0,streams=0' manifest.mpd
 ```
+If this command creates an error (Could not write header for output file), try changing the single quotes to double quotes.
 
 ### Known Issues
 - The combination of 360° video rendering and dynamic higher-order Ambisonics binaural rendering is computationally demanding, which is why HOAST360 will not work on mobile devices and on some older computers. Always make sure to use a recent version of Firefox or a Chromium-based browser (Chrome, Opera, Edge, ...). At the moment we recommend Firefox, as it yielded the best results in our tests. If playback is not smooth, consider lowering the video quality by using the settings dropdown menu of the player. Lowering the video quality will NOT impair audio quality.
