@@ -39,6 +39,6 @@
     "videojs-contrib-dash": "github:thomasdeppisch/videojs-contrib-dash",
     "videojs-contrib-quality-levels": "^2.0.9",
     "videojs-http-source-selector": "github:thomasdeppisch/videojs-http-source-selector",
-    "videojs-xr": "0.0.3"
+    "videojs-xr": "^0.0.4"
   }
 }
