@@ -104,12 +104,16 @@ export class HOAST360 {
         this._setOrderDependentVariables();
 
         if (this.mediaUrl.includes(".mpd")) { // in this case audio and video are inside the same mpd
-            this.sourceNode = this.context.createMediaElementSource(this.videoPlayer.tech({ IWillNotUseThisInPlugins: true }).el());
+            if (!this.sourceNode)
+                this.sourceNode = this.context.createMediaElementSource(this.videoPlayer.tech({ IWillNotUseThisInPlugins: true }).el());
+            
             this.videoPlayer.src({ type: 'application/dash+xml', src: this.mediaUrl });
             this.audioPlayer = null;
         } else { // load audio and video from separate mpds
             this.audioPlayer = dashjs.MediaPlayer().create();
-            this.sourceNode = this.context.createMediaElementSource(this.audioElement);
+            if (!this.sourceNode)
+                this.sourceNode = this.context.createMediaElementSource(this.audioElement);
+                
             this.videoPlayer.src({ type: 'application/dash+xml', src: this.mediaUrl + 'video.mpd' });
             this.audioPlayer.initialize(this.audioElement);
             this.audioPlayer.setAutoPlay(false);
