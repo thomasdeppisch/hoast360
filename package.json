@@ -1,6 +1,6 @@
 {
   "name": "hoast-player",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "360 degree video player with dynamic binaural higher-order ambisonics rendering, depending on view direction and zoom factor.",
   "main": "hoast360.js",
   "scripts": {
@@ -39,6 +39,6 @@
     "videojs-contrib-dash": "github:thomasdeppisch/videojs-contrib-dash",
     "videojs-contrib-quality-levels": "^2.0.9",
     "videojs-http-source-selector": "github:thomasdeppisch/videojs-http-source-selector",
-    "videojs-xr": "0.0.3"
+    "videojs-xr": "^0.1.0"
   }
 }
