@@ -34,6 +34,7 @@ import PlaybackEventHandler from './dependencies/PlaybackEventHandler.js';
 import HOASTloader from './dependencies/HoastLoader.js';
 import HOASTBinDecoder from './dependencies/HoastBinauralDecoder.js';
 import HOASTRotator from './dependencies/HoastRotator.js';
+import { isMobileTabletVRDevice } from './dependencies/UserAgentChecker.js';
 import './css/video-js.css';
 import './css/hoast360.css';
 
@@ -60,11 +61,17 @@ export class HOAST360 {
         this.maxOrder = 4;
         this.opusSupport = true;
         this.zoomIndex = 1;
+        this.zoomEnabled = true;
 
         var AudioContext = window.AudioContext || window.webkitAudioContext;
         this.context = new AudioContext;
         console.log(this.context);
 
+        if (isMobileTabletVRDevice()) {
+            this.zoomEnabled = false; // disable zoom on mobile and VR devices to improve efficiency
+            console.log('detected mobile device: zoom disabled');
+        }
+            
         this.playbackEventHandler = new PlaybackEventHandler(this.context);
 
         // create as many audio players as we need for max order
@@ -203,8 +210,15 @@ export class HOAST360 {
         this.sourceNode.channelCount = this.numCh;
 
         this.sourceNode.connect(this.rotator.in);
-        this.rotator.out.connect(this.multiplier.in);
-        this.multiplier.out.connect(this.decoder.in);
+
+        if (this.zoomEnabled) {
+            this.rotator.out.connect(this.multiplier.in);
+            this.multiplier.out.connect(this.decoder.in);
+        }
+        else {
+            this.rotator.out.connect(this.decoder.in);
+        }
+        
         this.decoder.out.connect(this.masterGain);
         this.masterGain.connect(this.context.destination);
 
@@ -235,9 +249,11 @@ export class HOAST360 {
             scope.rotator.updateRotationFromCamera(this.xrPose.views[0].transform.matrix);
         });
 
-        vidControls.orbit.addEventListener("zoom", function () { // zoom change
-            scope._updateZoom();
-        });
+        if (this.zoomEnabled) {
+            vidControls.orbit.addEventListener("zoom", function () { // zoom change
+                scope._updateZoom();
+            });
+        }
 
         this.videoPlayer.xr().on("xrSessionActivated", function () {
             scope.xrActive = true;
@@ -247,7 +263,9 @@ export class HOAST360 {
         this.videoPlayer.xr().on("xrSessionDeactivated", function () {
             scope.xrActive = false;
             scope.multiplier.bypass(false);
-            scope._updateZoom();
+            if (scope.zoomEnabled)
+                scope._updateZoom();
+
             scope.rotator.updateRotationFromCamera(this.camera.matrixWorld.elements);
         });
 
