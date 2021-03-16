@@ -15,7 +15,7 @@
     "url": "git@git.iem.at:hoast/hoast-player.git"
   },
   "author": "",
-  "license": "ISC",
+  "license": "GPL-3.0-or-later",
   "devDependencies": {
     "@babel/core": "^7.11.4",
     "@babel/preset-env": "^7.11.0",
