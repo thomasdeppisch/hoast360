@@ -1,5 +1,5 @@
 {
-  "name": "hoast-player",
+  "name": "hoast360",
   "version": "0.9.4",
   "description": "360 degree video player with dynamic binaural higher-order ambisonics rendering, depending on view direction and zoom factor.",
   "main": "hoast360.js",
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@git.iem.at:hoast/hoast-player.git"
+    "url": "git@github.com:thomasdeppisch/hoast360.git"
   },
   "author": "",
   "license": "GPL-3.0-or-later",
