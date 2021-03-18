@@ -6,7 +6,6 @@ media/
 live/
 node_modules/*
 *.pem
-*.wav
 *.webm
 *.opus
 *.mpd
@@ -19,3 +18,5 @@ hoast-scripts/
 css/website.css
 hoast360.html
 index2.html
+irs/withRIR/
+irs/withoutRIR/
