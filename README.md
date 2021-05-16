@@ -91,6 +91,24 @@ ffmpeg -i input_video_with_metadata.mov -c:v copy -an output_video_without_metad
 ### Developing with HOAST360
 For development, using the node package manager [npm](https://www.npmjs.com/) is recommended. After installation of npm, go to the directory of the HOAST360 sources and type `npm install` in the command line. This will install all the required dependencies for development. After changing a source file, type `npm run build` to create a new development build, or `npm run production-build` for a fully-optimized production build. The bundles are generated using webpack and can be found in the 'dist/' folder. You can start a development server using `npm start`.
 
+----------
+###  Using the HOAST360 binaural decoder in WebAudio API projects
+The binaural decoder used by HOAST360 is based on the one from [JSAmbisonics](https://github.com/polarch/JSAmbisonics) but is adapted to work with our [decoding filters](https://github.com/thomasdeppisch/hoast360/tree/master/irs). You can use the [binaural decoder](https://github.com/thomasdeppisch/hoast360/blob/master/dependencies/HoastBinauralDecoder.js) in any Web Audio API project independent of HOAST360. To use the binaural decoder you need to initialize it with your audio context and the ambisonics order (currently supporting orders 1 to 4). Then load the [decoding filters](https://github.com/thomasdeppisch/hoast360/tree/master/irs) with the [HOASTloader](https://github.com/thomasdeppisch/hoast360/blob/master/dependencies/HoastLoader.js): 
+```
+var decoder = new HOASTBinDecoder(audioContext, ambisonicsOrder);
+var loaderFilters = new HOASTloader(audioContext, ambisonicsOrder, pathToDecoderFilters, (foaBuffer, hoaBuffer) => {
+    decoder.updateFilters(foaBuffer, hoaBuffer);
+});
+loaderFilters.load();
+```
+Finally integrate the decoder into your Web Audio API routing graph
+```
+someNode.connect(decoder.in);
+decoder.out.connect(someOtherNode);
+```
+See also the `_setupAudio()` function in [hoast360.js](https://github.com/thomasdeppisch/hoast360/blob/master/hoast360.js).
+
+----------
 ### Related repositories
 HOAST360 is built upon the open-source video player [video.js](https://videojs.com/), the DASH framework [dash.js](https://github.com/Dash-Industry-Forum/dash.js/wiki) and some of the Ambisonics processing is based on [JSAmbisonics](https://github.com/polarch/JSAmbisonics).
 
