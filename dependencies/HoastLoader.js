@@ -132,7 +132,10 @@ export default class HOASTloader {
         this.hoaBuffer = this.context.createBuffer(nCh - 4, hoalength, srate);
         for (var i = 1; i < nChGroups; i++) {
             for (var j = 0; j < this.buffers[i].numberOfChannels; j++) {
-                this.hoaBuffer.getChannelData((i - 1) * 8 + j).set(this.buffers[i].getChannelData(0));
+                // take channel j of this group, not channel 0: otherwise every
+                // destination in the group receives a copy of the group's FIRST
+                // decoding filter instead of its own
+                this.hoaBuffer.getChannelData((i - 1) * 8 + j).set(this.buffers[i].getChannelData(j));
             }
         }
     }
