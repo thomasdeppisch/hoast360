@@ -97,7 +97,13 @@ export class HOAST360 {
             // had no equivalent anywhere, so it played video with permanently
             // silent audio.
             if (scope.context.state !== 'running')
-                scope.context.resume();
+                scope.context.resume().catch(function (e) {
+                    // resume() rejects on a closed context. Nothing closes this
+                    // one today, so this is a guard rather than a known path,
+                    // but an unhandled rejection here would be silent noise in
+                    // the console exactly when audio is already failing.
+                    console.warn('AudioContext resume failed:', e);
+                });
         });
     }
 
