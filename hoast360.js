@@ -35,6 +35,7 @@ import HOASTloader from './dependencies/HoastLoader.js';
 import HOASTBinDecoder from './dependencies/HoastBinauralDecoder.js';
 import HOASTRotator from './dependencies/HoastRotator.js';
 import { isMobileTabletVRDevice } from './dependencies/UserAgentChecker.js';
+import { probeOpusSupport, CHROME_OPUS_HELP_URL } from './dependencies/OpusProbe.js';
 import './css/video-js.css';
 import './css/hoast360.css';
 
@@ -76,9 +77,13 @@ export class HOAST360 {
 
         // create as many audio players as we need for max order
         this.audioElement = new Audio();
-        if (this.audioElement.canPlayType('audio/ogg; codecs="opus"') === '') {
-            this.opusSupport = false;
-        }
+        // Real decode capability, not canPlayType()/isTypeSupported(): both are
+        // advisory APIs, and WebKit in particular has a long history of
+        // answering true for audio/webm; codecs="opus" while decode still
+        // fails (see the comment in OpusProbe.js). Started here, memoized, and
+        // awaited in initialize() so the probe overlaps with page load instead
+        // of adding to it.
+        this._opusProbe = probeOpusSupport();
 
         this.videoPlayer = videojs('hoast360-player', {
             html5: { nativeCaptions: false },
@@ -89,9 +94,34 @@ export class HOAST360 {
         });
     }
 
-    initialize(newMediaUrl, newIrUrl, newOrder) {
+    async initialize(newMediaUrl, newIrUrl, newOrder) {
+        const opus = await this._opusProbe;
+        this.opusSupport = opus.ok;
         if (!this.opusSupport) {
-            this.videoPlayer.error('Error: Your browser does not support the OPUS audio codec. Please use Firefox or Chrome-based browsers.');
+            // Two different failures need two different answers. A browser that
+            // cannot decode Opus at all is a dead end here; one that decodes
+            // stereo but not multichannel is almost certainly a fixable Chrome
+            // field trial, and telling that user "your browser does not support
+            // Opus" would be both wrong and useless, since their browser
+            // supports it right up until the channel count goes above 2.
+            if (opus.diagnosis === 'multichannel-only-failure') {
+                this.videoPlayer.error(
+                    'Error: This browser decodes stereo Opus but fails on multichannel, which this '
+                    + 'player needs. On Chrome this is the DirectOpusAudioDecoding experiment: quit '
+                    + 'Chrome and relaunch it with --disable-features=DirectOpusAudioDecoding, or use '
+                    + 'Firefox or Brave. Details: ' + CHROME_OPUS_HELP_URL);
+                // The message is rendered as plain text by video.js, so repeat
+                // it where a link is clickable and the detail can be longer.
+                console.error(
+                    'Multichannel Opus decode failed while stereo Opus decoded successfully.\n'
+                    + 'Known cause on Chrome: the DirectOpusAudioDecoding field trial, which is\n'
+                    + 'server-delivered, does not appear in chrome://flags, and is NOT cleared by\n'
+                    + 'incognito, a guest profile, or restarting the browser.\n'
+                    + 'Workaround: relaunch Chrome with --disable-features=DirectOpusAudioDecoding\n'
+                    + 'Background and evidence: ' + CHROME_OPUS_HELP_URL);
+            } else {
+                this.videoPlayer.error('Error: Your browser does not support the OPUS audio codec. Please use Firefox or Chrome-based browsers.');
+            }
             return;
         }
 
