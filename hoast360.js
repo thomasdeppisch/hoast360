@@ -104,7 +104,13 @@ export class HOAST360 {
      */
     static async orderFromManifest(mediaUrl) {
         try {
-            const r = await fetch(mediaUrl, { cache: 'no-store' });
+            // mediaUrl is either a combined .mpd or the directory prefix that
+            // initialize() appends audio.mpd/video.mpd to. The channel count
+            // sits on the audio AdaptationSet in both layouts, so resolve to
+            // the audio manifest before fetching rather than fetching a
+            // directory and finding nothing.
+            const url = mediaUrl.includes('.mpd') ? mediaUrl : mediaUrl + 'audio.mpd';
+            const r = await fetch(url, { cache: 'no-store' });
             if (!r.ok) return null;
             const text = await r.text();
             const m = text.match(/audio_channel_configuration[^>]*value="(\d+)"/i)
