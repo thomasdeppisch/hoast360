@@ -89,6 +89,42 @@ export class HOAST360 {
         });
     }
 
+    /**
+     * Attach WebVTT subtitle tracks to the player.
+     *
+     * Three things make this awkward enough to be worth providing rather than
+     * leaving to each embedder, and all three fail silently:
+     *
+     *  - addRemoteTextTrack does not exist until video.js has finished
+     *    setting the player up, so a call made right after initialize() is
+     *    simply lost. This waits for the player to be ready.
+     *  - a .vtt served from another origin is dropped without a console
+     *    error unless the media element carries crossorigin="anonymous".
+     *    The DASH segments are unaffected, because dash.js fetches those by
+     *    XHR, so the symptom is captions missing while video plays.
+     *  - adding a track does not display it: mode has to be set to
+     *    'showing'. The 'default' flag alone does not do it.
+     *
+     * @param tracks [{ src, lang, label }], first entry shown by default
+     * @param crossOrigin set when the tracks are served from another origin
+     */
+    addCaptions(tracks, crossOrigin = false) {
+        if (!tracks || !tracks.length) return;
+        this.videoPlayer.ready(() => {
+            if (crossOrigin) {
+                const el = this.videoPlayer.el().querySelector('video');
+                if (el) el.setAttribute('crossorigin', 'anonymous');
+            }
+            tracks.forEach((t, i) => {
+                const el = this.videoPlayer.addRemoteTextTrack({
+                    kind: 'captions', src: t.src, srclang: t.lang,
+                    label: t.label, default: i === 0,
+                }, true);
+                if (i === 0 && el && el.track) el.track.mode = 'showing';
+            });
+        });
+    }
+
     initialize(newMediaUrl, newIrUrl, newOrder) {
         if (!this.opusSupport) {
             this.videoPlayer.error('Error: Your browser does not support the OPUS audio codec. Please use Firefox or Chrome-based browsers.');
