@@ -90,7 +90,7 @@ export class HOAST360 {
     }
 
     /**
-     * Attach WebVTT subtitle tracks to the player.
+     * Attach WebVTT caption tracks to the player.
      *
      * Three things make this awkward enough to be worth providing rather than
      * leaving to each embedder, and all three fail silently:
@@ -105,8 +105,10 @@ export class HOAST360 {
      *  - adding a track does not display it: mode has to be set to
      *    'showing'. The 'default' flag alone does not do it.
      *
-     * @param tracks [{ src, lang, label }], first entry shown by default
-     * @param crossOrigin set when the tracks are served from another origin
+     * @param {Array<{src: string, lang: string, label: string}>} tracks
+     *        first entry is shown by default
+     * @param {boolean} [crossOrigin=false] set when the tracks are served from
+     *        another origin
      */
     addCaptions(tracks, crossOrigin = false) {
         if (!tracks || !tracks.length) return;
@@ -116,11 +118,11 @@ export class HOAST360 {
                 if (el) el.setAttribute('crossorigin', 'anonymous');
             }
             tracks.forEach((t, i) => {
-                const el = this.videoPlayer.addRemoteTextTrack({
+                const trackEl = this.videoPlayer.addRemoteTextTrack({
                     kind: 'captions', src: t.src, srclang: t.lang,
                     label: t.label, default: i === 0,
                 }, true);
-                if (i === 0 && el && el.track) el.track.mode = 'showing';
+                if (i === 0 && trackEl && trackEl.track) trackEl.track.mode = 'showing';
             });
         });
     }
