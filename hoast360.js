@@ -88,6 +88,24 @@ export class HOAST360 {
                 httpSourceSelector: { default: 'auto' }
             }
         });
+
+        let scope = this;
+        this.videoPlayer.on('play', function () {
+            // Autoplay policy: the AudioContext starts suspended, and the play
+            // click is the user gesture allowed to resume it. The
+            // separate-audio-MPD path already gets this via
+            // PlaybackEventHandler; the combined-MPD path (single manifest.mpd)
+            // had no equivalent anywhere, so it played video with permanently
+            // silent audio.
+            if (scope.context.state !== 'running')
+                scope.context.resume().catch(function (e) {
+                    // resume() rejects on a closed context. Nothing closes this
+                    // one today, so this is a guard rather than a known path,
+                    // but an unhandled rejection here would be silent noise in
+                    // the console exactly when audio is already failing.
+                    console.warn('AudioContext resume failed:', e);
+                });
+        });
     }
 
     initialize(newMediaUrl, newIrUrl, newOrder) {
