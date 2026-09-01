@@ -5,6 +5,7 @@ dependencies/videojs-vr/
 media/
 live/
 node_modules/*
+.npm-cache/
 *.pem
 *.webm
 *.opus

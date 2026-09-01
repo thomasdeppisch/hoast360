@@ -34,6 +34,7 @@ import PlaybackEventHandler from './dependencies/PlaybackEventHandler.js';
 import HOASTloader from './dependencies/HoastLoader.js';
 import HOASTBinDecoder from './dependencies/HoastBinauralDecoder.js';
 import HOASTRotator from './dependencies/HoastRotator.js';
+import attachDashQualityLevelBridge from './dependencies/VideojsDashQualityLevelBridge.js';
 import { isMobileTabletVRDevice } from './dependencies/UserAgentChecker.js';
 import './css/video-js.css';
 import './css/hoast360.css';
@@ -96,8 +97,6 @@ export class HOAST360 {
         }
 
         this.videoPlayer.xr();
-        console.log(this.videoPlayer);
-        console.log(this.videoPlayer.xr());
 
         this.audioSetupComplete = false;
         this.videoSetupComplete = false;
@@ -115,6 +114,7 @@ export class HOAST360 {
                 this.sourceNode = this.context.createMediaElementSource(this.videoPlayer.tech({ IWillNotUseThisInPlugins: true }).el());
             
             this.videoPlayer.src({ type: 'application/dash+xml', src: this.mediaUrl });
+            attachDashQualityLevelBridge(this.videoPlayer);
             this.audioPlayer = null;
         } else { // load audio and video from separate mpds
             this.audioPlayer = dashjs.MediaPlayer().create();
@@ -122,6 +122,7 @@ export class HOAST360 {
                 this.sourceNode = this.context.createMediaElementSource(this.audioElement);
                 
             this.videoPlayer.src({ type: 'application/dash+xml', src: this.mediaUrl + 'video.mpd' });
+            attachDashQualityLevelBridge(this.videoPlayer);
             this.audioPlayer.initialize(this.audioElement);
             this.audioPlayer.setAutoPlay(false);
             this.audioPlayer.attachSource(this.mediaUrl + "audio.mpd");
@@ -130,7 +131,6 @@ export class HOAST360 {
         let scope = this;
 
         this.videoPlayer.xr().on("initialized", function () {
-            console.log("xr initialized");
             scope._startSetup();
 
             // playback event handler is only needed if we have separate audio and video players
