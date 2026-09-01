@@ -138,13 +138,51 @@ export class HOAST360 {
             if (!r.ok) return null;
             const text = await r.text();
             const m = text.match(/audio_channel_configuration[^>]*value="(\d+)"/i)
-                   || text.match(/AudioChannelConfiguration[^>]*value="(\d+)"/);
+                || text.match(/AudioChannelConfiguration[^>]*value="(\d+)"/);
             if (!m) return null;
             // (order + 1)^2 channels: 1st order is 4, 2nd 9, 3rd 16, 4th 25.
             return ({ 4: 1, 9: 2, 16: 3, 25: 4 })[parseInt(m[1], 10)] ?? null;
         } catch (e) {
             return null;
         }
+    }
+
+    /**
+     * Attach WebVTT caption tracks to the player.
+     *
+     * Three things make this awkward enough to be worth providing rather than
+     * leaving to each embedder, and all three fail silently:
+     *
+     *  - addRemoteTextTrack does not exist until video.js has finished
+     *    setting the player up, so a call made right after initialize() is
+     *    simply lost. This waits for the player to be ready.
+     *  - a .vtt served from another origin is dropped without a console
+     *    error unless the media element carries crossorigin="anonymous".
+     *    The DASH segments are unaffected, because dash.js fetches those by
+     *    XHR, so the symptom is captions missing while video plays.
+     *  - adding a track does not display it: mode has to be set to
+     *    'showing'. The 'default' flag alone does not do it.
+     *
+     * @param {Array<{src: string, lang: string, label: string}>} tracks
+     *        first entry is shown by default
+     * @param {boolean} [crossOrigin=false] set when the tracks are served from
+     *        another origin
+     */
+    addCaptions(tracks, crossOrigin = false) {
+        if (!tracks || !tracks.length) return;
+        this.videoPlayer.ready(() => {
+            if (crossOrigin) {
+                const el = this.videoPlayer.el().querySelector('video');
+                if (el) el.setAttribute('crossorigin', 'anonymous');
+            }
+            tracks.forEach((t, i) => {
+                const trackEl = this.videoPlayer.addRemoteTextTrack({
+                    kind: 'captions', src: t.src, srclang: t.lang,
+                    label: t.label, default: i === 0,
+                }, true);
+                if (i === 0 && trackEl && trackEl.track) trackEl.track.mode = 'showing';
+            });
+        });
     }
 
     /**
@@ -160,6 +198,7 @@ export class HOAST360 {
                 return;
             }
         }
+
         const opus = await this._opusProbe;
         this.opusSupport = opus.ok;
         if (!this.opusSupport) {
