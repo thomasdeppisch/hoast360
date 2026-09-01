@@ -54,6 +54,16 @@ before initializing with the new media path like above. The above steps are also
 ### Codec Considerations
 HOAST360 uses MPEG-DASH, and supports video files using H.264 or VP8/VP9. For audio files the OPUS codec is chosen, as it is the only lossy codec supporting multichannel files, which is available in most browsers (not in Safari, see below). Video and audio files are packaged in the webm container for streaming via DASH. The media folder HOAST360 is initialized with is supposed to contain two MPEG DASH manifest files: One called 'video.mpd' containing the required information of the video DASH stream, and one called 'audio.mpd' containing the information for the audio stream. The following ffmpeg commands have proven to be effective for encoding the media. Adapt the commands (especially regarding audio/video resolution, bitrate, etc.) according to your needs.
 
+### Chrome Limitation
+Recent Chrome versions may fail to decode the multichannel OPUS audio stream used by HOAST360, even though stereo OPUS still works. In that case playback fails with errors such as `MEDIA_ERR_SRC_NOT_SUPPORTED` and `DecoderStatus::Codes::kUnsupportedConfig`. This is a Chrome decoder issue rather than a HOAST360 issue.
+
+If this happens, launch Chrome with:
+```bash
+open -na "Google Chrome" --args --disable-features=DirectOpusAudioDecoding
+```
+
+On macOS this starts a fresh Chrome instance with the workaround enabled. Firefox also works for testing. If Chrome fixes this decoder bug in a future release, the workaround should no longer be necessary.
+
 Transcode video to webm (VP9, DASH):
 ```
 ffmpeg -i <videoInputFileName> -r 25 -c:v libvpx-vp9 -s 1440x720 -b:v 1800k -minrate 900k -maxrate 2610k -crf 31 -quality good -keyint_min 150 -g 150 -speed 1 -tile-columns 2 -frame-parallel 1 -an -f webm -dash 1 <videoOututFileName.webm>
@@ -90,6 +100,8 @@ ffmpeg -i input_video_with_metadata.mov -c:v copy -an output_video_without_metad
 ----------
 ### Developing with HOAST360
 For development, using the node package manager [npm](https://www.npmjs.com/) is recommended. After installation of npm, go to the directory of the HOAST360 sources and type `npm install` in the command line. This will install all the required dependencies for development. After changing a source file, type `npm run build` to create a new development build, or `npm run production-build` for a fully-optimized production build. The bundles are generated using webpack and can be found in the 'dist/' folder. You can start a development server using `npm start`.
+
+Use the bundled `http-server` via `npm start` for local testing. Some generic static servers, including Python's simple HTTP server, can trigger the dash.js/WebM parser error `required tag not found` with the demo media in this repository.
 
 ----------
 ###  Using the HOAST360 binaural decoder in WebAudio API projects

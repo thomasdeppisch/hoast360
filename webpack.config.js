@@ -1,3 +1,4 @@
+var path = require('path');
 var webpack = require('webpack');
 var BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
@@ -5,16 +6,13 @@ const config = {
     entry: './hoast360.js',
     output: {
         filename: 'hoast360.bundle.js',
-        libraryTarget: 'umd'
+        path: path.resolve(__dirname, 'dist'),
+        library: {
+            type: 'umd'
+        }
     },
     module: {
         rules: [
-            {
-                enforce: 'pre',
-                test: /\.js$/,
-                exclude: /node_modules/,
-                loader: 'eslint-loader',
-            },
             {
                 test: /\.m?js$/,
                 exclude: /(node_modules|bower_components)/,
@@ -32,9 +30,17 @@ const config = {
         ]
     },
     resolve: {
-        extensions: ['*', '.js'],
+        extensions: ['.js'],
+        fallback: {
+            buffer: require.resolve('buffer/'),
+            stream: require.resolve('stream-browserify'),
+            string_decoder: require.resolve('string_decoder/')
+        }
     },
     plugins: [
+        new webpack.ProvidePlugin({
+            Buffer: ['buffer', 'Buffer']
+        })
     ]
 };
 

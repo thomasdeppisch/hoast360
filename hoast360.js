@@ -34,7 +34,9 @@ import PlaybackEventHandler from './dependencies/PlaybackEventHandler.js';
 import HOASTloader from './dependencies/HoastLoader.js';
 import HOASTBinDecoder from './dependencies/HoastBinauralDecoder.js';
 import HOASTRotator from './dependencies/HoastRotator.js';
+import attachDashQualityLevelBridge from './dependencies/VideojsDashQualityLevelBridge.js';
 import { isMobileTabletVRDevice } from './dependencies/UserAgentChecker.js';
+import { probeOpusSupport, CHROME_OPUS_HELP_URL } from './dependencies/OpusProbe.js';
 import './css/video-js.css';
 import './css/hoast360.css';
 
@@ -76,9 +78,13 @@ export class HOAST360 {
 
         // create as many audio players as we need for max order
         this.audioElement = new Audio();
-        if (this.audioElement.canPlayType('audio/ogg; codecs="opus"') === '') {
-            this.opusSupport = false;
-        }
+        // Real decode capability, not canPlayType()/isTypeSupported(): both are
+        // advisory APIs, and WebKit in particular has a long history of
+        // answering true for audio/webm; codecs="opus" while decode still
+        // fails (see the comment in OpusProbe.js). Started here, memoized, and
+        // awaited in initialize() so the probe overlaps with page load instead
+        // of adding to it.
+        this._opusProbe = probeOpusSupport();
 
         this.videoPlayer = videojs('hoast360-player', {
             html5: { nativeCaptions: false },
@@ -87,17 +93,143 @@ export class HOAST360 {
                 httpSourceSelector: { default: 'auto' }
             }
         });
+
+        let scope = this;
+        this.videoPlayer.on('play', function () {
+            // Autoplay policy: the AudioContext starts suspended, and the play
+            // click is the user gesture allowed to resume it. The
+            // separate-audio-MPD path already gets this via
+            // PlaybackEventHandler; the combined-MPD path (single manifest.mpd)
+            // had no equivalent anywhere, so it played video with permanently
+            // silent audio.
+            if (scope.context.state !== 'running')
+                scope.context.resume().catch(function (e) {
+                    // resume() rejects on a closed context. Nothing closes this
+                    // one today, so this is a guard rather than a known path,
+                    // but an unhandled rejection here would be silent noise in
+                    // the console exactly when audio is already failing.
+                    console.warn('AudioContext resume failed:', e);
+                });
+        });
     }
 
-    initialize(newMediaUrl, newIrUrl, newOrder) {
+    /**
+     * Read the ambisonic order from a DASH manifest.
+     *
+     * The order is a property of the stream, and the manifest already states
+     * it: every MPD carries AudioChannelConfiguration on the audio
+     * AdaptationSet. Requiring the caller to pass it as well means every
+     * embedder hardcodes a number, and a page serving clips of different
+     * orders has to track which is which out of band.
+     *
+     * Returns null when the manifest cannot be read or states a channel count
+     * that is not a full ambisonic set, so the caller can fall back rather
+     * than silently render at the wrong order.
+     */
+    static async orderFromManifest(mediaUrl) {
+        try {
+            // mediaUrl is either a combined .mpd or the directory prefix that
+            // initialize() appends audio.mpd/video.mpd to. The channel count
+            // sits on the audio AdaptationSet in both layouts, so resolve to
+            // the audio manifest before fetching rather than fetching a
+            // directory and finding nothing.
+            const url = mediaUrl.includes('.mpd') ? mediaUrl : mediaUrl + 'audio.mpd';
+            const r = await fetch(url, { cache: 'no-store' });
+            if (!r.ok) return null;
+            const text = await r.text();
+            const m = text.match(/audio_channel_configuration[^>]*value="(\d+)"/i)
+                || text.match(/AudioChannelConfiguration[^>]*value="(\d+)"/);
+            if (!m) return null;
+            // (order + 1)^2 channels: 1st order is 4, 2nd 9, 3rd 16, 4th 25.
+            return ({ 4: 1, 9: 2, 16: 3, 25: 4 })[parseInt(m[1], 10)] ?? null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    /**
+     * Attach WebVTT caption tracks to the player.
+     *
+     * Three things make this awkward enough to be worth providing rather than
+     * leaving to each embedder, and all three fail silently:
+     *
+     *  - addRemoteTextTrack does not exist until video.js has finished
+     *    setting the player up, so a call made right after initialize() is
+     *    simply lost. This waits for the player to be ready.
+     *  - a .vtt served from another origin is dropped without a console
+     *    error unless the media element carries crossorigin="anonymous".
+     *    The DASH segments are unaffected, because dash.js fetches those by
+     *    XHR, so the symptom is captions missing while video plays.
+     *  - adding a track does not display it: mode has to be set to
+     *    'showing'. The 'default' flag alone does not do it.
+     *
+     * @param {Array<{src: string, lang: string, label: string}>} tracks
+     *        first entry is shown by default
+     * @param {boolean} [crossOrigin=false] set when the tracks are served from
+     *        another origin
+     */
+    addCaptions(tracks, crossOrigin = false) {
+        if (!tracks || !tracks.length) return;
+        this.videoPlayer.ready(() => {
+            if (crossOrigin) {
+                const el = this.videoPlayer.el().querySelector('video');
+                if (el) el.setAttribute('crossorigin', 'anonymous');
+            }
+            tracks.forEach((t, i) => {
+                const trackEl = this.videoPlayer.addRemoteTextTrack({
+                    kind: 'captions', src: t.src, srclang: t.lang,
+                    label: t.label, default: i === 0,
+                }, true);
+                if (i === 0 && trackEl && trackEl.track) trackEl.track.mode = 'showing';
+            });
+        });
+    }
+
+    /**
+     * @param newOrder ambisonic order. Omit it (or pass null) to read it from
+     *        the manifest with orderFromManifest().
+     */
+    async initialize(newMediaUrl, newIrUrl, newOrder = null) {
+        if (newOrder === null || newOrder === undefined) {
+            newOrder = await HOAST360.orderFromManifest(newMediaUrl);
+            if (newOrder === null) {
+                this.videoPlayer.error(
+                    'Error: could not read the ambisonic order from the manifest, and none was given.');
+                return;
+            }
+        }
+
+        const opus = await this._opusProbe;
+        this.opusSupport = opus.ok;
         if (!this.opusSupport) {
-            this.videoPlayer.error('Error: Your browser does not support the OPUS audio codec. Please use Firefox or Chrome-based browsers.');
+            // Two different failures need two different answers. A browser that
+            // cannot decode Opus at all is a dead end here; one that decodes
+            // stereo but not multichannel is almost certainly a fixable Chrome
+            // field trial, and telling that user "your browser does not support
+            // Opus" would be both wrong and useless, since their browser
+            // supports it right up until the channel count goes above 2.
+            if (opus.diagnosis === 'multichannel-only-failure') {
+                this.videoPlayer.error(
+                    'Error: This browser decodes stereo Opus but fails on multichannel, which this '
+                    + 'player needs. On Chrome this is the DirectOpusAudioDecoding experiment: quit '
+                    + 'Chrome and relaunch it with --disable-features=DirectOpusAudioDecoding, or use '
+                    + 'Firefox or Brave. Details: ' + CHROME_OPUS_HELP_URL);
+                // The message is rendered as plain text by video.js, so repeat
+                // it where a link is clickable and the detail can be longer.
+                console.error(
+                    'Multichannel Opus decode failed while stereo Opus decoded successfully.\n'
+                    + 'Known cause on Chrome: the DirectOpusAudioDecoding field trial, which is\n'
+                    + 'server-delivered, does not appear in chrome://flags, and is NOT cleared by\n'
+                    + 'incognito, a guest profile, or restarting the browser.\n'
+                    + 'Workaround: relaunch Chrome with --disable-features=DirectOpusAudioDecoding\n'
+                    + 'Background and evidence: ' + CHROME_OPUS_HELP_URL);
+            } else {
+                this.videoPlayer.error('Error: Your browser does not support the OPUS audio codec. Please use Firefox or Chrome-based browsers.');
+            }
             return;
         }
 
         this.videoPlayer.xr();
-        console.log(this.videoPlayer);
-        console.log(this.videoPlayer.xr());
 
         this.audioSetupComplete = false;
         this.videoSetupComplete = false;
@@ -115,6 +247,7 @@ export class HOAST360 {
                 this.sourceNode = this.context.createMediaElementSource(this.videoPlayer.tech({ IWillNotUseThisInPlugins: true }).el());
             
             this.videoPlayer.src({ type: 'application/dash+xml', src: this.mediaUrl });
+            attachDashQualityLevelBridge(this.videoPlayer);
             this.audioPlayer = null;
         } else { // load audio and video from separate mpds
             this.audioPlayer = dashjs.MediaPlayer().create();
@@ -122,6 +255,7 @@ export class HOAST360 {
                 this.sourceNode = this.context.createMediaElementSource(this.audioElement);
                 
             this.videoPlayer.src({ type: 'application/dash+xml', src: this.mediaUrl + 'video.mpd' });
+            attachDashQualityLevelBridge(this.videoPlayer);
             this.audioPlayer.initialize(this.audioElement);
             this.audioPlayer.setAutoPlay(false);
             this.audioPlayer.attachSource(this.mediaUrl + "audio.mpd");
@@ -130,7 +264,6 @@ export class HOAST360 {
         let scope = this;
 
         this.videoPlayer.xr().on("initialized", function () {
-            console.log("xr initialized");
             scope._startSetup();
 
             // playback event handler is only needed if we have separate audio and video players
