@@ -113,7 +113,53 @@ export class HOAST360 {
         });
     }
 
-    async initialize(newMediaUrl, newIrUrl, newOrder) {
+    /**
+     * Read the ambisonic order from a DASH manifest.
+     *
+     * The order is a property of the stream, and the manifest already states
+     * it: every MPD carries AudioChannelConfiguration on the audio
+     * AdaptationSet. Requiring the caller to pass it as well means every
+     * embedder hardcodes a number, and a page serving clips of different
+     * orders has to track which is which out of band.
+     *
+     * Returns null when the manifest cannot be read or states a channel count
+     * that is not a full ambisonic set, so the caller can fall back rather
+     * than silently render at the wrong order.
+     */
+    static async orderFromManifest(mediaUrl) {
+        try {
+            // mediaUrl is either a combined .mpd or the directory prefix that
+            // initialize() appends audio.mpd/video.mpd to. The channel count
+            // sits on the audio AdaptationSet in both layouts, so resolve to
+            // the audio manifest before fetching rather than fetching a
+            // directory and finding nothing.
+            const url = mediaUrl.includes('.mpd') ? mediaUrl : mediaUrl + 'audio.mpd';
+            const r = await fetch(url, { cache: 'no-store' });
+            if (!r.ok) return null;
+            const text = await r.text();
+            const m = text.match(/audio_channel_configuration[^>]*value="(\d+)"/i)
+                   || text.match(/AudioChannelConfiguration[^>]*value="(\d+)"/);
+            if (!m) return null;
+            // (order + 1)^2 channels: 1st order is 4, 2nd 9, 3rd 16, 4th 25.
+            return ({ 4: 1, 9: 2, 16: 3, 25: 4 })[parseInt(m[1], 10)] ?? null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    /**
+     * @param newOrder ambisonic order. Omit it (or pass null) to read it from
+     *        the manifest with orderFromManifest().
+     */
+    async initialize(newMediaUrl, newIrUrl, newOrder = null) {
+        if (newOrder === null || newOrder === undefined) {
+            newOrder = await HOAST360.orderFromManifest(newMediaUrl);
+            if (newOrder === null) {
+                this.videoPlayer.error(
+                    'Error: could not read the ambisonic order from the manifest, and none was given.');
+                return;
+            }
+        }
         const opus = await this._opusProbe;
         this.opusSupport = opus.ok;
         if (!this.opusSupport) {
