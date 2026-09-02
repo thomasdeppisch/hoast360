@@ -34,7 +34,7 @@
     "dashjs": "4.2.0",
     "numeric": "^1.2.6",
     "spherical-harmonic-transform": "^0.1.1",
-    "video.js": "7.11.4",
+    "video.js": "7.21.7",
     "videojs-contrib-dash": "5.1.1",
     "videojs-contrib-quality-levels": "2.0.9",
     "videojs-http-source-selector": "1.1.6",
