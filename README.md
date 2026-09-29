@@ -52,17 +52,16 @@ before initializing with the new media path like above. The above steps are also
 ```hoast360.initialize("path/to/media/", "https://mywebsite.com/path/to/irs/", ambisonicsOrder);```
 
 ### Chrome Limitation
-Recent Chrome versions may fail to decode the multichannel OPUS audio stream used by HOAST360, even though stereo OPUS still works. In that case playback fails with errors such as `MEDIA_ERR_SRC_NOT_SUPPORTED` and `DecoderStatus::Codes::kUnsupportedConfig`. This is a Chrome decoder issue rather than a HOAST360 issue.
+Chrome 151 and 152 could fail to decode the multichannel OPUS audio stream used by HOAST360, even though stereo OPUS still worked. In that case playback fails with errors such as `MEDIA_ERR_SRC_NOT_SUPPORTED` and `DecoderStatus::Codes::kUnsupportedConfig`. This was a Chrome decoder issue rather than a HOAST360 issue, and Chrome has fixed it ([Chromium 547065816](https://issues.chromium.org/issues/547065816)). Chrome 153.0.8010.36 and later decode the stream, so updating Chrome makes the workaround unnecessary.
 
-If this happens, launch Chrome with:
+If you cannot update, launch Chrome 151 or 152 with:
 ```bash
 open -na "Google Chrome" --args --disable-features=DirectOpusAudioDecoding
 ```
+On macOS this starts a fresh Chrome instance with the workaround enabled. Firefox also works for testing.
 
 ### Codec Considerations
 HOAST360 uses MPEG-DASH, and supports video files using H.264 or VP8/VP9. For audio files the OPUS codec is chosen, as it is the only lossy codec supporting multichannel files, which is available in most browsers (not in Safari, see below). Video and audio files are packaged in the webm container for streaming via DASH. The media folder HOAST360 is initialized with is supposed to contain two MPEG DASH manifest files: One called 'video.mpd' containing the required information of the video DASH stream, and one called 'audio.mpd' containing the information for the audio stream. The following ffmpeg commands have proven to be effective for encoding the media. Adapt the commands (especially regarding audio/video resolution, bitrate, etc.) according to your needs.
-
-On macOS this starts a fresh Chrome instance with the workaround enabled. Firefox also works for testing. If Chrome fixes this decoder bug in a future release, the workaround should no longer be necessary.
 
 Transcode video to webm (VP9, DASH):
 ```
